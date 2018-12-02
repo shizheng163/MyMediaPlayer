@@ -16,11 +16,17 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->m_pSelectPictBtn, &QPushButton::clicked, this, &SelectDir);
+    connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::SlotBtnEnable);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::SlotBtnEnable(bool enable)
+{
+    ui->m_pSelectPictBtn->setEnabled(enable);
 }
 
 void MainWindow::SelectDir()
@@ -46,6 +52,7 @@ void MainWindow::ShowPictures(QString dir)
         return;
     }
     std::thread([&](std::vector<std::string> pictures){
+        emit SignalBtnEnable(false);
         QImage *pimg = new QImage;
         for(string pictName : pictures)
         {
@@ -59,7 +66,7 @@ void MainWindow::ShowPictures(QString dir)
             Sleep(40);
         }
         delete pimg;
-        QApplication::quit();
+        emit SignalBtnEnable(true);
     }, pictures).detach();
 }
 

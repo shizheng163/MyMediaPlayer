@@ -15,8 +15,11 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+signals:
+    void                        SignalBtnEnable(bool);
 
 private:
+    void                        SlotBtnEnable(bool enable);
     void                        SelectDir();
     void                        ShowPictures(QString dir);
     std::vector<std::string>    FindPicturesFromDir(std::string dir);
