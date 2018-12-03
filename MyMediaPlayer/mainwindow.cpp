@@ -9,13 +9,31 @@
 #include <thread>
 #include <windows.h>
 #include <QDebug>
+#include <queue>
+#include <condition_variable>
+#include <mutex>
 using namespace std;
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+    //布局
     ui->setupUi(this);
-    connect(ui->m_pSelectPictBtn, &QPushButton::clicked, this, &SelectDir);
+    this->setFixedSize(this->size());
+    this->setStyleSheet("QMainWindow{background-color:#1C1C1C;}");
+
+    unsigned mainWidth(this->width()), mainHeight(this->height());
+    ui->m_pLabVideoImage->move(0, 0);
+    ui->m_pLabVideoImage->resize(mainWidth, mainHeight * 0.9);
+    ui->m_pLabVideoImage->setStyleSheet("background-color:#000000");
+
+    ui->m_pLabProcessBar->move(0, this->height() * 0.85);
+    ui->m_pLabProcessBar->resize(ui->m_pLabVideoImage->width(), this->height()*0.05);
+    ui->m_pLabProcessBar->setStyleSheet("background-color:#66CDAA");
+
+    this->ResetControls();
+
+    connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &SelectDir);
     connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::SlotBtnEnable);
 }
 
@@ -26,7 +44,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::SlotBtnEnable(bool enable)
 {
-    ui->m_pSelectPictBtn->setEnabled(enable);
+    ui->m_pBtnOpenFile->setEnabled(enable);
+}
+
+void MainWindow::ResetControls()
+{
+    emit SignalBtnEnable(true);
+    ui->m_pLabProcessBar->setText(tr("当前无文件播放"));
+    ui->m_pLabVideoImage->setPixmap(QPixmap(QString::fromUtf8("imags/video.ico")));
 }
 
 void MainWindow::SelectDir()
@@ -34,11 +59,12 @@ void MainWindow::SelectDir()
     QString dir = QFileDialog::getExistingDirectory(this, tr("选择文件夹"), "H://");
     if(dir.isEmpty())
     {
-        ui->m_pPictuerLabel->setText("未选择文件夹");
+        ui->m_pLabVideoImage->setText("未选择文件夹");
+        this->ResetControls();
     }
     else
     {
-        ui->m_pPictuerLabel->setText("Show Picture ing....");
+        ui->m_pLabVideoImage->setText("Show Picture ing....");
         ShowPictures(dir);
     }
 }
@@ -48,26 +74,73 @@ void MainWindow::ShowPictures(QString dir)
     std::vector<std::string> pictures = FindPicturesFromDir(dir.toStdString());
     if(pictures.empty())
     {
-        ui->m_pPictuerLabel->setText("no pictures can load.");
+        ui->m_pLabVideoImage->setText("no pictures can load.");
         return;
     }
+    std::thread(&MainWindow::ShowPicturesInThread, this, pictures).detach();
+}
+
+void MainWindow::ShowPicturesInThread(std::vector<string> pictureVector)
+{
+    std::mutex mutexForMemoryPictures;
+    std::queue<PicturePtr> memoryPictures;
+    std::condition_variable conditionVar;
+    unsigned totolPictureNum = pictureVector.size();
+    unsigned curPictureNum = 0;
+    emit SignalBtnEnable(false);
     std::thread([&](std::vector<std::string> pictures){
-        emit SignalBtnEnable(false);
-        QImage *pimg = new QImage;
-        for(string pictName : pictures)
+        for(string pictureName : pictures)
         {
-            if(!pimg->load(pictName.c_str()))
-            {
-                qDebug() << "error: picture" << pictName.c_str() << "could not right load.";
-                continue;
-            }
-            ui->m_pPictuerLabel->setPixmap(QPixmap::fromImage(pimg->scaled(ui->m_pPictuerLabel->size())));
-            qDebug() << "showing picture " << pictName.c_str();
-            Sleep(40);
+            FILE * fPict = fopen(pictureName.c_str(), "rb");
+            fseek(fPict, 0, SEEK_END);
+            PicturePtr pPicture(new Picture);
+            pPicture->m_len = ftell(fPict);
+            pPicture->m_pData = new uint8_t[pPicture->m_len];
+            pPicture->m_strPictureName = pictureName;
+            fseek(fPict, 0, SEEK_SET);
+            fread(pPicture->m_pData, sizeof(uint8_t), pPicture->m_len, fPict);
+            fclose(fPict);
+            unique_lock<mutex> locker(mutexForMemoryPictures);
+            memoryPictures.push(pPicture);
+            conditionVar.notify_one();
         }
-        delete pimg;
-        emit SignalBtnEnable(true);
-    }, pictures).detach();
+    }, pictureVector).detach();
+
+    std::thread([&](){
+        unsigned i = 0;
+        while(i < totolPictureNum)
+        {
+            Sleep(40);
+            i++;
+            qDebug() << "cur should show picture num:" << i;
+        }
+
+    }).detach();
+
+    QImage *pimg = new QImage;
+    while(curPictureNum < totolPictureNum)
+    {
+        unique_lock<mutex> locker(mutexForMemoryPictures);
+        if(memoryPictures.empty())
+            conditionVar.wait(locker);
+        PicturePtr ptr = memoryPictures.front();
+        memoryPictures.pop();
+        locker.unlock();
+        curPictureNum++;
+        if(!pimg->loadFromData(ptr->m_pData, ptr->m_len, "jpg"))
+        {
+            qDebug() << "error: load memory picture" << ptr->m_strPictureName.c_str();
+        }
+        ui->m_pLabVideoImage->setPixmap(QPixmap::fromImage(pimg->scaled(ui->m_pLabVideoImage->size())));
+        string textName(ptr->m_strPictureName);
+        textName.append("\t\t");
+        textName.append(to_string(curPictureNum));
+        textName.append("/");
+        textName.append(to_string(totolPictureNum));
+        ui->m_pLabProcessBar->setText(textName.c_str());
+    }
+    delete pimg;
+    this->ResetControls();
 }
 
 std::vector<std::string> MainWindow::FindPicturesFromDir(std::string dir)
@@ -86,7 +159,6 @@ std::vector<std::string> MainWindow::FindPicturesFromDir(std::string dir)
         {
             if(!(fileinfo.attrib & _A_SUBDIR))
             {
-                cout << "process file:" << fileinfo.name << endl;
                 string filename(fileinfo.name);
                 size_t pos = filename.find_last_of('.');
                 if(pos != std::string::npos)
