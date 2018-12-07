@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //布局
     ui->setupUi(this);
     this->setFixedSize(this->size());
-    this->setStyleSheet("QMainWindow{background-color:#1C1C1C;}");
+    this->setStyleSheet("QMainWindow{background-color:#C9C9C9;}");
 
     unsigned mainWidth(this->width()), mainHeight(this->height());
     ui->m_pLabVideoImage->move(0, 0);
@@ -30,6 +30,13 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->m_pLabProcessBar->move(0, this->height() * 0.85);
     ui->m_pLabProcessBar->resize(ui->m_pLabVideoImage->width(), this->height()*0.05);
     ui->m_pLabProcessBar->setStyleSheet("background-color:#66CDAA");
+
+    //设置按钮透明
+    ui->m_pBtnOpenFile->setFlat(true);
+    ui->m_pBtnPlayOrPause->setFlat(true);
+    ui->m_pBtnStop->setFlat(true);
+    ui->m_pBtnSpeedSlow->setFlat(true);
+    ui->m_pBtnSpeedUp->setFlat(true);
 
     this->ResetControls();
 
