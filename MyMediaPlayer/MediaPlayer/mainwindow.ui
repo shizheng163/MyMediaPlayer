@@ -14,34 +14,6 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QLabel" name="m_pLabVideoImage">
-    <property name="geometry">
-     <rect>
-      <x>0</x>
-      <y>0</y>
-      <width>1011</width>
-      <height>611</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string notr="true"/>
-    </property>
-    <property name="textFormat">
-     <enum>Qt::AutoText</enum>
-    </property>
-    <property name="pixmap">
-     <pixmap>imags/video.ico</pixmap>
-    </property>
-    <property name="scaledContents">
-     <bool>false</bool>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-    <property name="wordWrap">
-     <bool>false</bool>
-    </property>
-   </widget>
    <widget class="QLabel" name="m_pLabProcessBar">
     <property name="geometry">
      <rect>
@@ -75,7 +47,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>imags/open.ico</normaloff>imags/open.ico</iconset>
+         <normaloff>images/open.ico</normaloff>images/open.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -92,7 +64,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>imags/left.ico</normaloff>imags/left.ico</iconset>
+         <normaloff>images/left.ico</normaloff>images/left.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -109,7 +81,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>imags/play.ico</normaloff>imags/play.ico</iconset>
+         <normaloff>images/play.ico</normaloff>images/play.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -126,7 +98,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>imags/right.ico</normaloff>imags/right.ico</iconset>
+         <normaloff>images/right.ico</normaloff>images/right.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -143,7 +115,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>imags/stop.ico</normaloff>imags/stop.ico</iconset>
+         <normaloff>images/stop.ico</normaloff>images/stop.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -156,7 +128,6 @@
     </layout>
    </widget>
    <zorder>verticalLayoutWidget</zorder>
-   <zorder>m_pLabVideoImage</zorder>
    <zorder>m_pLabProcessBar</zorder>
   </widget>
  </widget>
