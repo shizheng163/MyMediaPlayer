@@ -10,6 +10,15 @@ struct FileRawData
     FileRawData(){
         m_pData = NULL;
     }
+    FileRawData(FileRawData && filedata)
+    {
+        m_pData = filedata.m_pData;
+        m_uLen = filedata.m_uLen;
+        m_filename = filedata.m_filename;
+        filedata.m_pData = NULL;
+        filedata.m_uLen = 0;
+        filedata.m_filename.clear();
+    }
     ~FileRawData()
     {
         if(m_pData)
@@ -22,7 +31,26 @@ struct FileRawData
     std::string m_filename;
 };
 typedef std::shared_ptr<FileRawData> FileRawDataPtr;
+struct PictureFile: public FileRawData
+{
+    enum PictureFormat
+    {
+        kFormatYuv,
+        kFormatJpeg
+    };
+    PictureFile(FileRawData & parent, uint32_t nWeight, uint32_t nHeight, PictureFormat pictFormat)
+        :FileRawData(std::move(parent))
+        ,m_nWeight(nWeight)
+        ,m_nHeight(nHeight)
+        ,m_pictFormat(pictFormat)
+    {
 
+    }
+    uint32_t        m_nWeight;
+    uint32_t        m_nHeight;
+    PictureFormat   m_pictFormat;
+};
+typedef std::shared_ptr<PictureFile> PictureFilePtr;
 FileRawDataPtr ReadFileRawData(std::string filename);
 
 }//namespace fileutil

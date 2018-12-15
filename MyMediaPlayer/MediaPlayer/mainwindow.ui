@@ -47,7 +47,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>images/open.ico</normaloff>images/open.ico</iconset>
+         <normaloff>../../images/open.ico</normaloff>../../images/open.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -64,7 +64,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>images/left.ico</normaloff>images/left.ico</iconset>
+         <normaloff>../../images/left.ico</normaloff>../../images/left.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -81,7 +81,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>images/play.ico</normaloff>images/play.ico</iconset>
+         <normaloff>../../images/play.ico</normaloff>../../images/play.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -98,7 +98,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>images/right.ico</normaloff>images/right.ico</iconset>
+         <normaloff>../../images/right.ico</normaloff>../../images/right.ico</iconset>
        </property>
        <property name="iconSize">
         <size>
@@ -115,7 +115,7 @@
        </property>
        <property name="icon">
         <iconset>
-         <normaloff>images/stop.ico</normaloff>images/stop.ico</iconset>
+         <normaloff>../../images/stop.ico</normaloff>../../images/stop.ico</iconset>
        </property>
        <property name="iconSize">
         <size>

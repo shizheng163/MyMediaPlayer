@@ -14,6 +14,7 @@
 #include <mutex>
 #include "logutil.h"
 using namespace std;
+using namespace fileutil;
 MainWindow::MainWindow(QWidget *parent)
     :QMainWindow(parent)
     ,ui(new Ui::MainWindow)
@@ -91,53 +92,32 @@ void MainWindow::ShowPictures(QString dir)
 
 void MainWindow::ShowPicturesInThread(std::vector<string> pictureVector)
 {
-    std::mutex mutexForMemoryPictures;
-    std::queue<VideoGLWidget::PicturePtr> memoryPictures;
-    std::condition_variable conditionVar;
-    unsigned totolPictureNum = pictureVector.size();
-    unsigned curPictureNum = 0;
     emit SignalBtnEnable(false);
-    std::thread([&](std::vector<std::string> pictures){
-        for(string pictureName : pictures)
-        {
-            VideoGLWidget::PicturePtr pPicture = fileutil::ReadFileRawData(pictureName);
-            if(!pPicture)
-                continue;
-            unique_lock<mutex> locker(mutexForMemoryPictures);
-            memoryPictures.push(pPicture);
-            conditionVar.notify_one();
-        }
-    }, pictureVector).detach();
-
-    std::thread([&](){
-        unsigned i = 0;
-        while(i < totolPictureNum)
-        {
-            Sleep(40);
-            i++;
-            logutil::MyLog(logutil::info, "cur should show picture num:%d\n", i);
-        }
-
-    }).detach();
-
-    while(curPictureNum < totolPictureNum)
+    clock_t start = clock();
+    for(unsigned i = 0; i < pictureVector.size(); i++)
     {
-        unique_lock<mutex> locker(mutexForMemoryPictures);
-        if(memoryPictures.empty())
-            conditionVar.wait(locker);
-        VideoGLWidget::PicturePtr ptr = memoryPictures.front();
-        memoryPictures.pop();
-        curPictureNum++;
-        locker.unlock();
-
-        m_pVideoGLWidget->PictureShow(ptr);
-        string textName(ptr->m_filename);
+        clock_t curTime = clock();
+        double waitDuration = (1000/23.6) * i - (curTime - start);
+        if(waitDuration > 0)
+        {
+            logutil::MyLog(logutil::info, "wait duration = %.3fms\n", waitDuration);
+            Sleep(waitDuration);
+        }
+        string &filename = pictureVector[i];
+        FileRawDataPtr pFileData = fileutil::ReadFileRawData(filename);
+        if(!pFileData)
+            continue;
+        PictureFilePtr pPicture(new PictureFile(*pFileData.get(), 1920, 1080, PictureFile::kFormatYuv));
+        m_pVideoGLWidget->PictureShow(pPicture);
+        string textName(pPicture->m_filename);
         textName.append("\t\t");
-        textName.append(to_string(curPictureNum));
+        textName.append(to_string(i+1));
         textName.append("/");
-        textName.append(to_string(totolPictureNum));
+        textName.append(to_string(pictureVector.size()));
         ui->m_pLabProcessBar->setText(textName.c_str());
     }
+    clock_t end = clock();
+    logutil::MyLog(logutil::info, "show end, time spend = %dms\n", end - start);
     this->ResetControls();
 }
 
@@ -163,7 +143,7 @@ std::vector<std::string> MainWindow::FindPicturesFromDir(std::string dir)
                 {
                     string extension = filename.substr(pos+1);
                     std::transform(extension.begin(), extension.end(), extension.begin(), std::ptr_fun<int, int>(tolower));
-                    if(extension == "img" || extension == "png" || extension == "jpeg" || extension == "jpg")
+                    if(/*extension == "img" || extension == "png" || extension == "jpeg" || extension == "jpg" ||*/extension == "yuv")
                     {
                         qDebug() << "get picture:" << fileinfo.name;
                         pictures.push_back(srcPath + "/" + filename);
