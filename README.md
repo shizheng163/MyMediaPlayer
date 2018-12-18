@@ -13,6 +13,7 @@
 - [简述](#%E7%AE%80%E8%BF%B0)
 - [变更记录](#%E5%8F%98%E6%9B%B4%E8%AE%B0%E5%BD%95)
 - [0.音视频基础简述](#0%E9%9F%B3%E8%A7%86%E9%A2%91%E5%9F%BA%E7%A1%80%E7%AE%80%E8%BF%B0)
+- [1. 模拟视频播放](#1-%E6%A8%A1%E6%8B%9F%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE)
 ***
 
 # 简述
@@ -20,9 +21,16 @@
 
 github地址:[https://github.com/shizheng163/MyMediaPlayer](https://github.com/shizheng163/MyMediaPlayer)
 
+注意:
+-   `前期关于播放器的开发环境都是Windows + QT5.7.1 MSVC2015`
+
 # 变更记录
 -   [变更记录](./doc/ChangeLog.md)
 
 # 0.音视频基础简述
 
--   [音视频基本概念](./doc/音视频基本概念.md)
+-   [音视频基本概念](./doc/0.音视频基本概念.md)
+
+# 1. 模拟视频播放
+
+-   [模拟视频播放](./doc/1.模拟视频播放.md)
