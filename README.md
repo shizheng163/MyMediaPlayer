@@ -34,3 +34,7 @@ github地址:[https://github.com/shizheng163/MyMediaPlayer](https://github.com/s
 # 1. 模拟视频播放
 
 -   [模拟视频播放](./doc/1.模拟视频播放.md)
+
+详细代码见github:
+
+-   [https://github.com/shizheng163/MyMediaPlayer/tree/v0.1.0](https://github.com/shizheng163/MyMediaPlayer/tree/v0.1.0)
