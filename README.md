@@ -14,6 +14,7 @@
 - [变更记录](#%E5%8F%98%E6%9B%B4%E8%AE%B0%E5%BD%95)
 - [0.音视频基础简述](#0%E9%9F%B3%E8%A7%86%E9%A2%91%E5%9F%BA%E7%A1%80%E7%AE%80%E8%BF%B0)
 - [1. 模拟视频播放](#1-%E6%A8%A1%E6%8B%9F%E8%A7%86%E9%A2%91%E6%92%AD%E6%94%BE)
+- [2. opengl渲染yuv图像](#2-opengl%E6%B8%B2%E6%9F%93yuv%E5%9B%BE%E5%83%8F)
 ***
 
 # 简述
@@ -38,3 +39,13 @@ github地址:[https://github.com/shizheng163/MyMediaPlayer](https://github.com/s
 详细代码见github:
 
 -   [https://github.com/shizheng163/MyMediaPlayer/tree/v0.1.0](https://github.com/shizheng163/MyMediaPlayer/tree/v0.1.0)
+
+# 2. opengl渲染yuv图像
+
+-   [opengl渲染yuv图像](./doc/2.opengl渲染yuv图像.md)
+
+详细代码见github:
+
+-   [https://github.com/shizheng163/MyMediaPlayer/tree/v0.2.0](https://github.com/shizheng163/MyMediaPlayer/tree/v0.2.0)
+
+文章中还提及了使用`ffmpeg`将视频拆分为多张yuv图像的方法。
