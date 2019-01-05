@@ -80,7 +80,8 @@ void VideoGLWidget::DefaultPictureShow()
     if(!m_pDefaultPict)
     {
         FileRawDataPtr pFileData = fileutil::ReadFileRawData("../../images/video.yuv");
-        m_pDefaultPict = PictureFilePtr(new PictureFile(*pFileData.get(), DEFAULT_ICO_PIX_WIDTH, DEFAULT_ICO_PIX_HEIGHT, PictureFile::kFormatYuv));
+        if(pFileData)
+            m_pDefaultPict = PictureFilePtr(new PictureFile(*pFileData.get(), DEFAULT_ICO_PIX_WIDTH, DEFAULT_ICO_PIX_HEIGHT, PictureFile::kFormatYuv));
     }
     m_pYuvPictPtr = m_pDefaultPict;
     m_drawRect = QRect((width() - DEFAULT_ICO_VIEW_WIDTH)/2, (height() - DEFAULT_ICO_VIEW_HEIGHT) /2, DEFAULT_ICO_VIEW_WIDTH, DEFAULT_ICO_VIEW_HEIGHT);
