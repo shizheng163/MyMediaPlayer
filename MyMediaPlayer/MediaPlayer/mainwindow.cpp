@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright © 2018-2019 shizheng. All Rights Reserved.
 日期: 2019-1-13
 作者: 史正
@@ -123,7 +123,7 @@ void MainWindow::processYuv(PictureFilePtr pPicture)
 {
     clock_t curTime = clock();
     double waitDuration = m_fFrameDuration + m_nLastRenderedTime - curTime;
-    MyLog(info, "wait duration = %.2f ms\n", waitDuration);
+    //MyLog(info, "wait duration = %.2f ms\n", waitDuration);
     if(waitDuration > 0)
         Sleep(waitDuration);
     m_pVideoGLWidget->PictureShow(pPicture);
