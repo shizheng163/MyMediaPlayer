@@ -1,3 +1,9 @@
+/*
+Copyright Â© 2018-2019 shizheng. All Rights Reserved.
+æ—¥æœŸ: 2019-1-13
+ä½œè€…: å²æ­£
+é‚®ç®±: shizheng163@126.com
+*/
 #ifndef FFDECODER_H
 #define FFDECODER_H
 #include <string>
@@ -21,20 +27,20 @@ public:
     bool StartDecodeThread();
     void StopDecode();
     /**
-     * @brief ÉèÖÃ½âÂëÊı¾İ»Øµ÷º¯Êı
+     * @brief è®¾ç½®è§£ç æ•°æ®å›è°ƒå‡½æ•°
      */
     void SetProcessDataCallback(ProcessYuvDataCallback callback);
     /**
-     * @brief ÉèÖÃ½âÂëÏß³ÌÍË³öµÄ»Øµ÷º¯Êı
+     * @brief è®¾ç½®è§£ç çº¿ç¨‹é€€å‡ºçš„å›è°ƒå‡½æ•°
      */
     void SetDecodeThreadExitCallback(DecodeThreadExitCallback callback);
     /**
-     * @brief »ñÈ¡´íÎóÔ­Òò
-     * @note µ±´íÎó·¢ÉúÊ±, ´íÎóÔ­Òò»á±»¼ÇÂ¼
+     * @brief è·å–é”™è¯¯åŸå› 
+     * @note å½“é”™è¯¯å‘ç”Ÿæ—¶, é”™è¯¯åŸå› ä¼šè¢«è®°å½•
      */
     std::string ErrName() const { return m_szErrName;}
     /**
-     * @brief »ñÈ¡ÊÓÆµÖ¡ÂÊ
+     * @brief è·å–è§†é¢‘å¸§ç‡
      */
     float GetVideoFrameRate();
 private:
@@ -46,7 +52,7 @@ private:
     int                         m_nVideoStreamIndex;
     AVCodecContext              *m_pCodecContext;
 
-    //´¦Àí½âÂëºóÊı¾İµÄ»Øµ÷º¯Êı
+    //å¤„ç†è§£ç åæ•°æ®çš„å›è°ƒå‡½æ•°
     std::mutex                  m_mutexForFnProcessYuvData;
     ProcessYuvDataCallback      m_fnProcssYuvData;
 
@@ -55,7 +61,7 @@ private:
 
     std::string                 m_szErrName;
 
-    //´¦Àí½âÂëÏß³ÌÍË³öµÄ»Øµ÷º¯Êı
+    //å¤„ç†è§£ç çº¿ç¨‹é€€å‡ºçš„å›è°ƒå‡½æ•°
     std::mutex                  m_mutexForFnThreadExit;
     DecodeThreadExitCallback    m_fnThreadExit;
 };

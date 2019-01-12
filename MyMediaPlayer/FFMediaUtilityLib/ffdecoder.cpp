@@ -1,3 +1,9 @@
+/*
+Copyright Â© 2018-2019 shizheng. All Rights Reserved.
+æ—¥æœŸ: 2019-1-13
+ä½œè€…: å²æ­£
+é‚®ç®±: shizheng163@126.com
+*/
 #include "ffdecoder.h"
 #include <memory>
 extern "C"
@@ -85,7 +91,7 @@ bool FFDecoder::InitializeDecoder(string url)
     }
     m_pCodecContext = avcodec_alloc_context3(pCodec);
 
-    //¸´ÖÆ½âÂëÆ÷²ÎÊı
+    //å¤åˆ¶è§£ç å™¨å‚æ•°
     ret = avcodec_parameters_to_context(m_pCodecContext, m_pInputFormatContext->streams[m_nVideoStreamIndex]->codecpar);
 
     if(ret < 0)
@@ -147,18 +153,18 @@ void FFDecoder::decodeInThread()
 
     AVFramePtr pFrameScale(av_frame_alloc(), [](AVFrame * ptr){
         av_frame_free(&ptr);
-        //ÊÍ·Åµ÷ÓÃav_image_allocÉêÇëµÄÄÚ´æ
+        //é‡Šæ”¾è°ƒç”¨av_image_allocç”³è¯·çš„å†…å­˜
         av_free(&ptr->data[0]);
     });
 
     int ret = 0;
 
-    //³õÊ¼»¯Í¼Ïñ×ª»»Æ÷
+    //åˆå§‹åŒ–å›¾åƒè½¬æ¢å™¨
     AVStream * pVideoStream = m_pInputFormatContext->streams[m_nVideoStreamIndex];
     SwsContext * pswsContext = sws_getContext(pVideoStream->codecpar->width, pVideoStream->codecpar->height, (AVPixelFormat)pVideoStream->codecpar->format,
                                               pVideoStream->codecpar->width, pVideoStream->codecpar->height, AV_PIX_FMT_YUV420P,
                                               SWS_FAST_BILINEAR, 0, 0, 0);
-    //ÉêÇëÍ¼Ïñ´æ´¢ÄÚ´æ
+    //ç”³è¯·å›¾åƒå­˜å‚¨å†…å­˜
     av_image_alloc(pFrameScale->data, pFrameScale->linesize, pVideoStream->codecpar->width, pVideoStream->codecpar->height, AV_PIX_FMT_YUV420P, 1);
 
     while(m_bIsRunDecodeThread)

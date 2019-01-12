@@ -1,3 +1,9 @@
+/*
+Copyright © 2018-2019 shizheng. All Rights Reserved.
+日期: 2019-1-13
+作者: 史正
+邮箱: shizheng163@126.com
+*/
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -41,7 +47,7 @@ private:
 
     VideoGLWidget               *m_pVideoGLWidget;
 
-    //����
+    //解码
     std::mutex                  m_mutexForDecoder;
     ffmpegutil::FFDecoder       *m_pDecoder;
     float                       m_fFrameDuration; //ms

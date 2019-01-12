@@ -1,3 +1,9 @@
+/*
+Copyright Â© 2018-2019 shizheng. All Rights Reserved.
+æ—¥æœŸ: 2019-1-13
+ä½œè€…: å²æ­£
+é‚®ç®±: shizheng163@126.com
+*/
 #ifndef VIDEOGLWIDGET_H
 #define VIDEOGLWFileRawDataPtrinclude <QWidget>
 #include <QOpenGLWidget>
@@ -23,28 +29,28 @@ protected:
     void                    paintGL();
 
 private:
-    //»æÍ¼ÊÇÒì²½¶¯×÷£¬ ·ÀÖ¹»æÍ¼¹ı³ÌÖĞ£¬Í¼Æ¬±»ÖÃÎªNULL£¬ËùÒÔĞèÒª¼ÓËø
+    //ç»˜å›¾æ˜¯å¼‚æ­¥åŠ¨ä½œï¼Œ é˜²æ­¢ç»˜å›¾è¿‡ç¨‹ä¸­ï¼Œå›¾ç‰‡è¢«ç½®ä¸ºNULLï¼Œæ‰€ä»¥éœ€è¦åŠ é”
     std::mutex                  m_mutexForShowYuvData;
-    bool                        m_bIsShowVideoIcon; //ÊÇ·ñÒªÏÔÊ¾ÊÓÆµÄ¬ÈÏÍ¼±ê
-    fileutil::PictureFilePtr    m_pDefaultPict;//Ä¬ÈÏÍ¼Æ¬
-    fileutil::PictureFilePtr    m_pYuvPictPtr;//µ±Ç°ĞèÒªÏÔÊ¾µÄYuvÊı¾İ
+    bool                        m_bIsShowVideoIcon; //æ˜¯å¦è¦æ˜¾ç¤ºè§†é¢‘é»˜è®¤å›¾æ ‡
+    fileutil::PictureFilePtr    m_pDefaultPict;//é»˜è®¤å›¾ç‰‡
+    fileutil::PictureFilePtr    m_pYuvPictPtr;//å½“å‰éœ€è¦æ˜¾ç¤ºçš„Yuvæ•°æ®
 
-    //ÏÔÊ¾OpengläÖÈ¾ºóÍ¼ÏñÎ»ÖÃ
+    //æ˜¾ç¤ºOpenglæ¸²æŸ“åå›¾åƒä½ç½®
     QRect                       m_drawRect;
 
-    //äÖÈ¾yuvÍ¼Ïñ±äÁ¿
-    GLuint                      textureUniformY; //yÎÆÀíÊı¾İÎ»ÖÃ
-    GLuint                      textureUniformU; //uÎÆÀíÊı¾İÎ»ÖÃ
-    GLuint                      textureUniformV; //vÎÆÀíÊı¾İÎ»ÖÃ
-    GLuint                      id_y; //yÎÆÀí¶ÔÏóID
-    GLuint                      id_u; //uÎÆÀí¶ÔÏóID
-    GLuint                      id_v; //vÎÆÀí¶ÔÏóID
-    QOpenGLTexture*             m_pTextureY;  //yÎÆÀí¶ÔÏó
-    QOpenGLTexture*             m_pTextureU;  //uÎÆÀí¶ÔÏó
-    QOpenGLTexture*             m_pTextureV;  //vÎÆÀí¶ÔÏó
-    QOpenGLShader *             m_pVSHader;  //¶¥µã×ÅÉ«Æ÷³ÌĞò¶ÔÏó
-    QOpenGLShader *             m_pFSHader;  //Æ¬¶Î×ÅÉ«Æ÷¶ÔÏó
-    QOpenGLShaderProgram        *m_pShaderProgram; //×ÅÉ«Æ÷³ÌĞòÈİÆ÷
+    //æ¸²æŸ“yuvå›¾åƒå˜é‡
+    GLuint                      textureUniformY; //yçº¹ç†æ•°æ®ä½ç½®
+    GLuint                      textureUniformU; //uçº¹ç†æ•°æ®ä½ç½®
+    GLuint                      textureUniformV; //vçº¹ç†æ•°æ®ä½ç½®
+    GLuint                      id_y; //yçº¹ç†å¯¹è±¡ID
+    GLuint                      id_u; //uçº¹ç†å¯¹è±¡ID
+    GLuint                      id_v; //vçº¹ç†å¯¹è±¡ID
+    QOpenGLTexture*             m_pTextureY;  //yçº¹ç†å¯¹è±¡
+    QOpenGLTexture*             m_pTextureU;  //uçº¹ç†å¯¹è±¡
+    QOpenGLTexture*             m_pTextureV;  //vçº¹ç†å¯¹è±¡
+    QOpenGLShader *             m_pVSHader;  //é¡¶ç‚¹ç€è‰²å™¨ç¨‹åºå¯¹è±¡
+    QOpenGLShader *             m_pFSHader;  //ç‰‡æ®µç€è‰²å™¨å¯¹è±¡
+    QOpenGLShaderProgram        *m_pShaderProgram; //ç€è‰²å™¨ç¨‹åºå®¹å™¨
 };
 
 #endif // VIDEOGLWIDGET_H

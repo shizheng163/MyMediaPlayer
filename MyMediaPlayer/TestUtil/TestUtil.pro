@@ -19,3 +19,5 @@ win32 {
 LIBS += -L$$PWD/../lib/ffmpeg/lib -lavcodec -lavformat -lavutil -lswscale -lavfilter -lswresample
 
 SOURCES += main.cpp
+
+HEADERS +=
