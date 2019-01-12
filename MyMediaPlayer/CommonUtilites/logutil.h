@@ -2,6 +2,7 @@
 #define LOGUTIL_H
 #include <stdio.h>
 #include <string>
+#include <stdarg.h>
 namespace logutil {
 
 enum MyLogType
@@ -14,17 +15,8 @@ enum MyLogType
     fatal
 };
 
-std::string LogTypeToString(MyLogType type);
-
-template<typename...Args>
-void MyLog(MyLogType type, const char * fmt, const Args&... args)
-{
-    std::string fmtStr = LogTypeToString(type) + ":";
-    fmtStr.append(fmt);
-    printf(fmtStr.c_str(), args...);
-    fflush(stdout);
-}
-
+void MyLog(MyLogType type, const char * fmt, ...);
+std::string MySprintf(const char * fmt, ...);
 }//namespace logutil
 
 #endif // LOGUTIL_H
