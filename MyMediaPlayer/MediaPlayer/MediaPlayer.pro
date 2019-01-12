@@ -9,6 +9,21 @@ TEMPLATE = app
 DEFINES += QT_DEPRECATED_WARNINGS
 
 
+win32 {
+    DESTDIR = $$PWD/../../build/debug
+}
+
+FORMS    += mainwindow.ui
+
+INCLUDEPATH += \
+    $$PWD/../CommonUtilites \
+    $$PWD/../FFMediaUtilityLib
+
+LIBS += \
+    -L$$PWD/../../build/debug/ -lCommonUtilites -lFFMediaUtilityLib
+
+LIBS += -L$$PWD/../lib/ffmpeg/lib -lavcodec -lavformat -lavutil -lswscale -lavfilter -lswresample
+
 SOURCES += \
     main.cpp\
     mainwindow.cpp \
@@ -17,15 +32,3 @@ SOURCES += \
 HEADERS  += \
     mainwindow.h \
     videoglwidget.h
-
-FORMS    += mainwindow.ui
-
-INCLUDEPATH += \
-    $$PWD/../CommonUtilites
-
-LIBS += \
-    -L$$PWD/../../build/debug/ -lCommonUtilites
-
-win32 {
-DESTDIR = $$PWD/../../build/debug/
-}

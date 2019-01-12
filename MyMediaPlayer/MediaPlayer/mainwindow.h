@@ -5,11 +5,17 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <stdint.h>
 #include "videoglwidget.h"
+
 
 namespace Ui {
 class MainWindow;
 }
+
+namespace ffmpegutil{
+class FFDecoder;
+}// namespace ffmpegutil
 
 class MainWindow : public QMainWindow
 {
@@ -22,16 +28,20 @@ signals:
     void                        SignalBtnEnable(bool);
 
 private:
-    void                        SlotBtnEnable(bool enable);
-    void                        ResetControls();
-    void                        SelectDir();
-    void                        ShowPictures(QString dir);
-    void                        ShowPicturesInThread(std::vector<std::string> pictureVector);
-    std::vector<std::string>    FindPicturesFromDir(std::string dir);
+    void                        slotBtnEnable(bool enable);
+    void                        resetControls();
+    void                        selectFile();
+    void                        playMedia(QString url);
+    void                        processYuv(fileutil::PictureFilePtr pPicture);
 
     Ui::MainWindow *ui;
 
-    VideoGLWidget              *m_pVideoGLWidget;
+    VideoGLWidget               *m_pVideoGLWidget;
+
+    //½âÂë
+    ffmpegutil::FFDecoder       *m_pDecoder;
+    float                       m_fFrameDuration; //ms
+    long                        m_nLastRenderedTime;
 };
 
 #endif // MAINWINDOW_H

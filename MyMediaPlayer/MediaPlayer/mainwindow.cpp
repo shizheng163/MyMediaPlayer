@@ -13,12 +13,18 @@
 #include <condition_variable>
 #include <mutex>
 #include "logutil.h"
+#include "ffdecoder.h"
+#include "ffmpegutil.h"
 using namespace std;
+using namespace logutil;
 using namespace fileutil;
 MainWindow::MainWindow(QWidget *parent)
     :QMainWindow(parent)
     ,ui(new Ui::MainWindow)
     ,m_pVideoGLWidget(NULL)
+    ,m_pDecoder(NULL)
+    ,m_fFrameDuration(40)
+    ,m_nLastRenderedTime(0)
 {
     //布局
     ui->setupUi(this);
@@ -42,118 +48,78 @@ MainWindow::MainWindow(QWidget *parent)
     ui->m_pBtnSpeedSlow->setFlat(true);
     ui->m_pBtnSpeedUp->setFlat(true);
 
-    this->ResetControls();
+    this->resetControls();
 
-    connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &SelectDir);
-    connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::SlotBtnEnable);
+    connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &selectFile);
+    connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::slotBtnEnable);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
     delete m_pVideoGLWidget;
+    if(m_pDecoder)
+    {
+        m_pDecoder->StopDecode();
+        m_pDecoder->SetProcessDataCallback(NULL);
+        delete m_pDecoder;
+        m_pDecoder = NULL;
+    }
 }
 
-void MainWindow::SlotBtnEnable(bool enable)
+void MainWindow::slotBtnEnable(bool enable)
 {
     ui->m_pBtnOpenFile->setEnabled(enable);
 }
 
-void MainWindow::ResetControls()
+void MainWindow::resetControls()
 {
     emit SignalBtnEnable(true);
     ui->m_pLabProcessBar->setText(tr("当前无文件播放"));
     m_pVideoGLWidget->DefaultPictureShow();
 }
 
-void MainWindow::SelectDir()
+void MainWindow::selectFile()
 {
-    QString dir = QFileDialog::getExistingDirectory(this, tr("选择文件夹"), "H://");
-    if(dir.isEmpty())
-    {
-        this->ResetControls();
-    }
-    else
-    {
-        ShowPictures(dir);
-    }
+    QString url = QFileDialog::getOpenFileName(this, tr("打开文件"), "H://", "All File(*.mp4)");
+    if(!url.isEmpty())
+        playMedia(url);
 }
 
-void MainWindow::ShowPictures(QString dir)
+void MainWindow::playMedia(QString url)
 {
-    std::vector<std::string> pictures = FindPicturesFromDir(dir.toStdString());
-    if(pictures.empty())
+    ui->m_pLabProcessBar->setText(url);
+    if(m_pDecoder)
     {
-        ui->m_pLabProcessBar->setText("未找到可显示的图片");
+        m_pDecoder->StopDecode();
+        m_pDecoder->SetProcessDataCallback(NULL);
+        delete m_pDecoder;
+    }
+    m_pDecoder = new ffmpegutil::FFDecoder;
+    if(!m_pDecoder->InitializeDecoder(url.toStdString()))
+    {
+        ui->m_pLabProcessBar->setText("InitializeDecoder:" + QString(m_pDecoder->ErrName().c_str()));
+        delete m_pDecoder;
         return;
     }
-    std::thread(&MainWindow::ShowPicturesInThread, this, pictures).detach();
+    m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processYuv, this, std::placeholders::_1));
+    m_fFrameDuration = 1000.0/m_pDecoder->GetVideoFrameRate();
+    if(!m_pDecoder->StartDecodeThread())
+    {
+        ui->m_pLabProcessBar->setText("StartDecodeThread:" + QString(m_pDecoder->ErrName().c_str()));
+        delete m_pDecoder;
+        return;
+    }
+    ui->m_pLabProcessBar->setText("播放中:" + url);
 }
 
-void MainWindow::ShowPicturesInThread(std::vector<string> pictureVector)
+void MainWindow::processYuv(PictureFilePtr pPicture)
 {
-    emit SignalBtnEnable(false);
-    clock_t start = clock();
-    for(unsigned i = 0; i < pictureVector.size(); i++)
-    {
-        clock_t curTime = clock();
-        double waitDuration = (1000/23.6) * i - (curTime - start);
-        if(waitDuration > 0)
-        {
-            logutil::MyLog(logutil::info, "wait duration = %.3fms\n", waitDuration);
-            Sleep(waitDuration);
-        }
-        string &filename = pictureVector[i];
-        FileRawDataPtr pFileData = fileutil::ReadFileRawData(filename);
-        if(!pFileData)
-            continue;
-        PictureFilePtr pPicture(new PictureFile(*pFileData.get(), 1920, 1080, PictureFile::kFormatYuv));
-        m_pVideoGLWidget->PictureShow(pPicture);
-        string textName(pPicture->m_filename);
-        textName.append("\t\t");
-        textName.append(to_string(i+1));
-        textName.append("/");
-        textName.append(to_string(pictureVector.size()));
-        ui->m_pLabProcessBar->setText(textName.c_str());
-    }
-    clock_t end = clock();
-    logutil::MyLog(logutil::info, "show end, time spend = %dms\n", end - start);
-    this->ResetControls();
-}
-
-std::vector<std::string> MainWindow::FindPicturesFromDir(std::string dir)
-{
-    string srcPath = dir;
-    dir.append("/*.*");
-    dir = QString::fromStdString(dir).replace("/", "\\\\").toStdString();
-    std::vector<std::string> pictures;
-    struct _finddata_t fileinfo;
-
-    intptr_t fileIdx = _findfirst(dir.c_str(), &fileinfo);
-    logutil::MyLog(logutil::info, "search dir:%s\n", dir.c_str());
-    if(fileIdx != -1)
-    {
-        do
-        {
-            if(!(fileinfo.attrib & _A_SUBDIR))
-            {
-                string filename(fileinfo.name);
-                size_t pos = filename.find_last_of('.');
-                if(pos != std::string::npos)
-                {
-                    string extension = filename.substr(pos+1);
-                    std::transform(extension.begin(), extension.end(), extension.begin(), std::ptr_fun<int, int>(tolower));
-                    if(/*extension == "img" || extension == "png" || extension == "jpeg" || extension == "jpg" ||*/extension == "yuv")
-                    {
-                        qDebug() << "get picture:" << fileinfo.name;
-                        pictures.push_back(srcPath + "/" + filename);
-                    }
-                }
-            }
-        }while(_findnext(fileIdx, &fileinfo) == 0);
-    }
-    else
-        logutil::MyLog(logutil::info, "could not find file from:%s\n", dir.c_str());
-    _findclose(fileIdx);
-    return pictures;
+    clock_t curTime = clock();
+    double waitDuration = m_fFrameDuration + m_nLastRenderedTime - curTime;
+    MyLog(info, "wait duration = %.2f ms\n", waitDuration);
+    if(waitDuration > 0)
+        Sleep(waitDuration);
+    m_pVideoGLWidget->PictureShow(pPicture);
+    m_nLastRenderedTime = clock();
 }
