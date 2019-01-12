@@ -74,7 +74,7 @@ bool FFDecoder::InitializeDecoder(string url)
         return false;
     }
 
-    av_dump_format(m_pInputFormatContext, m_nVideoStreamIndex, NULL, 0);
+//    av_dump_format(m_pInputFormatContext, m_nVideoStreamIndex, NULL, 0);
 
     //InitAVDecoder
     AVCodec * pCodec = avcodec_find_decoder(m_pInputFormatContext->streams[m_nVideoStreamIndex]->codecpar->codec_id);
