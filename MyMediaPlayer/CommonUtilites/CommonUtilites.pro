@@ -9,7 +9,7 @@ unix {
 }
 
 win32 {
-DESTDIR = $$PWD/../../build/debug/
+DESTDIR = $$PWD/../../build/debug
 }
 
 SOURCES += \

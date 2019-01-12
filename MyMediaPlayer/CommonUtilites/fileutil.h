@@ -9,6 +9,7 @@ struct FileRawData
 {
     FileRawData(){
         m_pData = NULL;
+        m_uLen = 0;
     }
     FileRawData(FileRawData && filedata)
     {
@@ -25,6 +26,16 @@ struct FileRawData
             delete m_pData;
         m_pData = NULL;
         m_uLen = 0;
+    }
+    void AppendData(uint8_t * pData, unsigned uLen)
+    {
+        uint8_t * pBuffer = new uint8_t[m_uLen + uLen];
+        if(m_pData)
+            memcpy(pBuffer, m_pData, m_uLen);
+        memcpy(pBuffer + m_uLen, pData, uLen);
+        m_uLen += uLen;
+        delete m_pData;
+        m_pData = pBuffer;
     }
     uint8_t *   m_pData;
     uint32_t    m_uLen;
