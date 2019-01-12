@@ -14,12 +14,20 @@ class FFDecoder
 {
 public:
     typedef std::function<void (YuvDataPtr pYuvData) > ProcessYuvDataCallback;
+    typedef std::function<void (bool bIsOccurErr) > DecodeThreadExitCallback;
     FFDecoder();
     ~FFDecoder();
     bool InitializeDecoder(std::string url);
     bool StartDecodeThread();
-    void SetProcessDataCallback(ProcessYuvDataCallback callback);
     void StopDecode();
+    /**
+     * @brief 设置解码数据回调函数
+     */
+    void SetProcessDataCallback(ProcessYuvDataCallback callback);
+    /**
+     * @brief 设置解码线程退出的回调函数
+     */
+    void SetDecodeThreadExitCallback(DecodeThreadExitCallback callback);
     /**
      * @brief 获取错误原因
      * @note 当错误发生时, 错误原因会被记录
@@ -33,18 +41,23 @@ private:
 
     void decodeInThread();
 
-    std::string             m_szUrl;
-    AVFormatContext         *m_pInputFormatContext;
-    int                     m_nVideoStreamIndex;
-    AVCodecContext          *m_pCodecContext;
+    std::string                 m_szUrl;
+    AVFormatContext             *m_pInputFormatContext;
+    int                         m_nVideoStreamIndex;
+    AVCodecContext              *m_pCodecContext;
 
-    std::mutex              m_mutexForFnProcessYuvData;
-    ProcessYuvDataCallback  m_fnProcssYuvData;
+    //处理解码后数据的回调函数
+    std::mutex                  m_mutexForFnProcessYuvData;
+    ProcessYuvDataCallback      m_fnProcssYuvData;
 
-    std::thread             m_threadForDecode;
-    bool                    m_bIsRunDecodeThread;
+    std::thread                 m_threadForDecode;
+    bool                        m_bIsRunDecodeThread;
 
-    std::string             m_szErrName;
+    std::string                 m_szErrName;
+
+    //处理解码线程退出的回调函数
+    std::mutex                  m_mutexForFnThreadExit;
+    DecodeThreadExitCallback    m_fnThreadExit;
 };
 }//namespace ffmpegutil
 

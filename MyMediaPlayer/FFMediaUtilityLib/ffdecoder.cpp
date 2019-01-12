@@ -121,6 +121,12 @@ void FFDecoder::SetProcessDataCallback(FFDecoder::ProcessYuvDataCallback callbac
     m_fnProcssYuvData = callback;
 }
 
+void FFDecoder::SetDecodeThreadExitCallback(FFDecoder::DecodeThreadExitCallback callback)
+{
+    std::unique_lock<mutex> locker(m_mutexForFnThreadExit);
+    m_fnThreadExit = callback;
+}
+
 void FFDecoder::StopDecode()
 {
     m_bIsRunDecodeThread = false;
@@ -203,4 +209,7 @@ void FFDecoder::decodeInThread()
         }
     }
     MyLog(m_bIsRunDecodeThread && !isEof ? err : info, "FFDecoder %s exit!\n", m_bIsRunDecodeThread && !isEof ? "abnormal" : "normal");
+    std::unique_lock<mutex> locker(m_mutexForFnThreadExit);
+    if(m_fnThreadExit)
+        m_fnThreadExit(m_bIsRunDecodeThread && !isEof);
 }
