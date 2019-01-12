@@ -3,4 +3,6 @@ TEMPLATE = subdirs
 
 SUBDIRS += \
     CommonUtilites \
-    MediaPlayer
+    FFMediaUtilityLib \
+    MediaPlayer \
+    TestUtil
