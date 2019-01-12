@@ -134,7 +134,7 @@ void FFDecoder::SetDecodeThreadExitCallback(FFDecoder::DecodeThreadExitCallback 
     m_fnThreadExit = callback;
 }
 
-void FFDecoder::StopDecode()
+void FFDecoder::StopDecodeThread()
 {
     m_bIsRunDecodeThread = false;
 }

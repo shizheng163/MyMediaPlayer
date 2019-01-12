@@ -26,7 +26,7 @@ public:
     ~FFDecoder();
     bool InitializeDecoder(std::string url);
     bool StartDecodeThread();
-    void StopDecode();
+    void StopDecodeThread();
     /**
      * @brief 设置解码数据回调函数
      */

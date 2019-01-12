@@ -152,7 +152,7 @@ void MainWindow::closeDecoder()
     unique_lock<mutex> locker(m_mutexForDecoder);
     if(m_pDecoder)
     {
-        m_pDecoder->StopDecode();
+        m_pDecoder->StopDecodeThread();
         m_pDecoder->SetProcessDataCallback(NULL);
         m_pDecoder->SetDecodeThreadExitCallback(NULL);
         delete m_pDecoder;
