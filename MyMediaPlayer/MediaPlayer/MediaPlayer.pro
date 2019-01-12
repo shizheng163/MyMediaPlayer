@@ -8,6 +8,7 @@ TEMPLATE = app
 
 DEFINES += QT_DEPRECATED_WARNINGS
 
+
 SOURCES += \
     main.cpp\
     mainwindow.cpp \
@@ -23,4 +24,8 @@ INCLUDEPATH += \
     $$PWD/../CommonUtilites
 
 LIBS += \
-    -L$$PWD/../../debug/ -lCommonUtilites
+    -L$$PWD/../../build/debug/ -lCommonUtilites
+
+win32 {
+DESTDIR = $$PWD/../../build/debug/
+}
