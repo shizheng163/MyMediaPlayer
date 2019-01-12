@@ -32,13 +32,17 @@ private:
     void                        resetControls();
     void                        selectFile();
     void                        playMedia(QString url);
+    void                        stopMedia();
     void                        processYuv(fileutil::PictureFilePtr pPicture);
+    void                        processDecodeThreadExit(bool bIsOccurExit);
+    void                        closeDecoder();
 
     Ui::MainWindow *ui;
 
     VideoGLWidget               *m_pVideoGLWidget;
 
     //½âÂë
+    std::mutex                  m_mutexForDecoder;
     ffmpegutil::FFDecoder       *m_pDecoder;
     float                       m_fFrameDuration; //ms
     long                        m_nLastRenderedTime;

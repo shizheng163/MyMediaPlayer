@@ -51,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->resetControls();
 
     connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &selectFile);
+    connect(ui->m_pBtnStop, &QPushButton::clicked, this, &stopMedia);
     connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::slotBtnEnable);
 }
 
@@ -58,13 +59,7 @@ MainWindow::~MainWindow()
 {
     delete ui;
     delete m_pVideoGLWidget;
-    if(m_pDecoder)
-    {
-        m_pDecoder->StopDecode();
-        m_pDecoder->SetProcessDataCallback(NULL);
-        delete m_pDecoder;
-        m_pDecoder = NULL;
-    }
+    this->closeDecoder();
 }
 
 void MainWindow::slotBtnEnable(bool enable)
@@ -91,9 +86,7 @@ void MainWindow::playMedia(QString url)
     ui->m_pLabProcessBar->setText(url);
     if(m_pDecoder)
     {
-        m_pDecoder->StopDecode();
-        m_pDecoder->SetProcessDataCallback(NULL);
-        delete m_pDecoder;
+        this->closeDecoder();
     }
     m_pDecoder = new ffmpegutil::FFDecoder;
     if(!m_pDecoder->InitializeDecoder(url.toStdString()))
@@ -103,6 +96,7 @@ void MainWindow::playMedia(QString url)
         return;
     }
     m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processYuv, this, std::placeholders::_1));
+    m_pDecoder->SetDecodeThreadExitCallback(std::bind(&MainWindow::processDecodeThreadExit, this, std::placeholders::_1));
     m_fFrameDuration = 1000.0/m_pDecoder->GetVideoFrameRate();
     if(!m_pDecoder->StartDecodeThread())
     {
@@ -111,6 +105,12 @@ void MainWindow::playMedia(QString url)
         return;
     }
     ui->m_pLabProcessBar->setText("播放中:" + url);
+}
+
+void MainWindow::stopMedia()
+{
+    this->closeDecoder();
+    this->resetControls();
 }
 
 void MainWindow::processYuv(PictureFilePtr pPicture)
@@ -122,4 +122,33 @@ void MainWindow::processYuv(PictureFilePtr pPicture)
         Sleep(waitDuration);
     m_pVideoGLWidget->PictureShow(pPicture);
     m_nLastRenderedTime = clock();
+}
+
+void MainWindow::processDecodeThreadExit(bool bIsOccurExit)
+{
+    if(bIsOccurExit)
+    {
+        ui->m_pLabProcessBar->setText("解码线程意外退出:" + QString(m_pDecoder->ErrName().c_str()));
+        //在另一线程关闭解码器, 不允许任何形式上的delete this的操作。
+        std::thread([this]{
+            this->closeDecoder();
+        }).detach();
+    }
+    else
+    {
+        this->resetControls();
+    }
+}
+
+void MainWindow::closeDecoder()
+{
+    unique_lock<mutex> locker(m_mutexForDecoder);
+    if(m_pDecoder)
+    {
+        m_pDecoder->StopDecode();
+        m_pDecoder->SetProcessDataCallback(NULL);
+        m_pDecoder->SetDecodeThreadExitCallback(NULL);
+        delete m_pDecoder;
+        m_pDecoder = NULL;
+    }
 }
