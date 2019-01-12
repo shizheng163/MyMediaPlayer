@@ -21,7 +21,9 @@ void logutil::MyLog(logutil::MyLogType type, const char *fmt, ...)
     va_end(valist);
     std::string szLog = pBuff;
     szLog.insert(0, g_logTypeStringMap.at(type) + ":");
-    std::cout << szLog;
+    if(szLog.back() == '\n')
+        szLog.pop_back();
+    std::cout << szLog << std::endl;
 }
 
 std::__cxx11::string logutil::MySprintf(const char *fmt, ...)
