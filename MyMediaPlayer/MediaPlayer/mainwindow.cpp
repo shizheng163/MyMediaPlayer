@@ -20,6 +20,9 @@
 #include <condition_variable>
 #include <mutex>
 #include <assert.h>
+#include <QMimeData>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 #include "logutil.h"
 #include "ffdecoder.h"
 #include "ffmpegutil.h"
@@ -59,6 +62,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->resetControls();
 
+    this->setAcceptDrops(true);
     connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &selectFile);
     connect(ui->m_pBtnStop, &QPushButton::clicked, this, &stopMedia);
     connect(ui->m_pBtnPlayOrPause, &QPushButton::clicked, this, &pauseSwitchMedia);
@@ -70,6 +74,27 @@ MainWindow::~MainWindow()
     delete ui;
     delete m_pVideoGLWidget;
     this->closeDecoder();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    //如果为文件，则支持拖放
+    if (event->mimeData()->hasFormat("text/uri-list"))
+        event->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    QList<QUrl> urls = event->mimeData()->urls();
+    if(urls.size() != 1)
+        return;
+
+    QString path = urls.front().path();
+#ifdef WIN32
+    if(path[0] == '/')
+        path.remove(0,1);
+#endif
+    playMedia(path);
 }
 
 void MainWindow::slotBtnEnable(bool enable)

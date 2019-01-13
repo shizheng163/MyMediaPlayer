@@ -35,6 +35,10 @@ signals:
     void                        SignalBtnEnable(bool);
 
 private:
+    //拖放功能
+    void                        dragEnterEvent(QDragEnterEvent *event);
+    void                        dropEvent(QDropEvent *event);
+
     void                        slotBtnEnable(bool enable);
     void                        resetControls();
     void                        selectFile();
