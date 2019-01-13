@@ -189,11 +189,11 @@ void MainWindow::processDecodeThreadExit(bool bIsOccurExit)
     if(bIsOccurExit)
     {
         ui->m_pLabProcessBar->setText("解码线程意外退出:" + QString(m_pDecoder->ErrName().c_str()));
-        //在另一线程关闭解码器, 不允许任何形式上的delete this的操作。
-        std::thread([this]{
-            this->closeDecoder();
-        }).detach();
     }
+    //在另一线程关闭解码器, 不允许任何形式上的delete this的操作。
+    std::thread([this]{
+        this->closeDecoder();
+    }).detach();
     this->resetControls();
 }
 
