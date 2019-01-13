@@ -102,6 +102,7 @@ void MainWindow::playMedia(QString url)
     {
         ui->m_pLabProcessBar->setText("InitializeDecoder:" + QString(m_pDecoder->ErrName().c_str()));
         delete m_pDecoder;
+        m_pDecoder = NULL;
         return;
     }
     m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processYuv, this, std::placeholders::_1));
@@ -114,6 +115,7 @@ void MainWindow::playMedia(QString url)
     {
         ui->m_pLabProcessBar->setText("StartDecodeThread:" + QString(m_pDecoder->ErrName().c_str()));
         delete m_pDecoder;
+        m_pDecoder = NULL;
         return;
     }
     ui->m_pLabProcessBar->setText("播放中:" + url);
@@ -132,7 +134,7 @@ void MainWindow::processYuv(PictureFilePtr pPicture)
     int64_t waitDuration = m_fFrameDuration * 1000 + int64_t(m_nLastRenderedTime - curTime);
     if(waitDuration > 0)
     {
-//        MyLog(info, "wait duration = %.2f ms\n", (double)waitDuration/1000);
+        //        MyLog(info, "wait duration = %.2f ms\n", (double)waitDuration/1000);
         usleep(waitDuration);
     }
     m_nLastRenderedTime = timeutil::GetSystemTimeMicrosecond();
