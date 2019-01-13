@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     this->setFixedSize(this->size());
     this->setStyleSheet("QMainWindow{background-color:#C9C9C9;}");
+    this->setWindowTitle("MediaPlayer");
 
     unsigned mainWidth(this->width()), mainHeight(this->height());
     m_pVideoGLWidget = new VideoGLWidget(this);

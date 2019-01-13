@@ -2,7 +2,7 @@ QT       += core gui
 QT       += opengl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-
+RC_ICONS = ../../images/VideoIcon.ico
 TARGET = MyMediaPlayer
 TEMPLATE = app
 
