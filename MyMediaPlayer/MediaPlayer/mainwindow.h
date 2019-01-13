@@ -40,6 +40,7 @@ private:
     void                        selectFile();
     void                        playMedia(QString url);
     void                        stopMedia();
+    void                        pauseSwitchMedia();
     void                        processYuv(fileutil::PictureFilePtr pPicture);
     void                        processDecodeThreadExit(bool bIsOccurExit);
     void                        closeDecoder();

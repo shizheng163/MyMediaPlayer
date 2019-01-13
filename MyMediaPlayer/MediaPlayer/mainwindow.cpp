@@ -61,6 +61,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(ui->m_pBtnOpenFile, &QPushButton::clicked, this, &selectFile);
     connect(ui->m_pBtnStop, &QPushButton::clicked, this, &stopMedia);
+    connect(ui->m_pBtnPlayOrPause, &QPushButton::clicked, this, &pauseSwitchMedia);
     connect(this, &MainWindow::SignalBtnEnable, this, &MainWindow::slotBtnEnable);
 }
 
@@ -81,6 +82,8 @@ void MainWindow::resetControls()
     emit SignalBtnEnable(true);
     ui->m_pLabProcessBar->setText(tr("当前无文件播放"));
     m_pVideoGLWidget->DefaultPictureShow();
+    QIcon button_ico("../../images/play.ico");
+    ui->m_pBtnPlayOrPause->setIcon(button_ico);
 }
 
 void MainWindow::selectFile()
@@ -93,9 +96,13 @@ void MainWindow::selectFile()
 void MainWindow::playMedia(QString url)
 {
     ui->m_pLabProcessBar->setText(url);
+    unique_lock<mutex> locker(m_mutexForDecoder);
     if(m_pDecoder)
     {
+        locker.unlock();
         this->closeDecoder();
+        this->resetControls();
+        locker.lock();
     }
     m_pDecoder = new ffmpegutil::FFDecoder;
     if(!m_pDecoder->InitializeDecoder(url.toStdString()))
@@ -127,6 +134,17 @@ void MainWindow::stopMedia()
     this->resetControls();
 }
 
+void MainWindow::pauseSwitchMedia()
+{
+    unique_lock<mutex> locker(m_mutexForDecoder);
+    if(m_pDecoder)
+    {
+        m_pDecoder->PauseSwitch();
+        QIcon button_ico(m_pDecoder->IsPause() ? "../../images/pause.ico": "../../images/play.ico");
+        ui->m_pBtnPlayOrPause->setIcon(button_ico);
+    }
+}
+
 void MainWindow::processYuv(PictureFilePtr pPicture)
 {
     m_pVideoGLWidget->PictureShow(pPicture);
@@ -150,10 +168,7 @@ void MainWindow::processDecodeThreadExit(bool bIsOccurExit)
             this->closeDecoder();
         }).detach();
     }
-    else
-    {
-        this->resetControls();
-    }
+    this->resetControls();
 }
 
 void MainWindow::closeDecoder()
