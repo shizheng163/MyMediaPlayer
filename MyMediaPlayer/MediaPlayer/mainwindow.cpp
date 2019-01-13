@@ -14,14 +14,16 @@
 #include <io.h>
 #include <iostream>
 #include <thread>
-#include <windows.h>
+#include <unistd.h>
 #include <QDebug>
 #include <queue>
 #include <condition_variable>
 #include <mutex>
+#include <assert.h>
 #include "logutil.h"
 #include "ffdecoder.h"
 #include "ffmpegutil.h"
+#include "timeutil.h"
 using namespace std;
 using namespace logutil;
 using namespace fileutil;
@@ -83,7 +85,7 @@ void MainWindow::resetControls()
 
 void MainWindow::selectFile()
 {
-    QString url = QFileDialog::getOpenFileName(this, tr("打开文件"), "H://", "All File(*.mp4)");
+    QString url = QFileDialog::getOpenFileName(this, tr("打开文件"), "H://", "All File(*)");
     if(!url.isEmpty())
         playMedia(url);
 }
@@ -104,7 +106,10 @@ void MainWindow::playMedia(QString url)
     }
     m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processYuv, this, std::placeholders::_1));
     m_pDecoder->SetDecodeThreadExitCallback(std::bind(&MainWindow::processDecodeThreadExit, this, std::placeholders::_1));
-    m_fFrameDuration = 1000.0/m_pDecoder->GetVideoFrameRate();
+    //帧率保留两位小数, 四舍五入
+    float frameRate = m_pDecoder->GetVideoFrameRate() + 0.005;
+    m_fFrameDuration = 100000.0/int(frameRate * 100);
+    m_nLastRenderedTime = timeutil::GetSystemTimeMicrosecond();
     if(!m_pDecoder->StartDecodeThread())
     {
         ui->m_pLabProcessBar->setText("StartDecodeThread:" + QString(m_pDecoder->ErrName().c_str()));
@@ -122,13 +127,15 @@ void MainWindow::stopMedia()
 
 void MainWindow::processYuv(PictureFilePtr pPicture)
 {
-    clock_t curTime = clock();
-    double waitDuration = m_fFrameDuration + m_nLastRenderedTime - curTime;
-    //MyLog(info, "wait duration = %.2f ms\n", waitDuration);
-    if(waitDuration > 0)
-        Sleep(waitDuration);
     m_pVideoGLWidget->PictureShow(pPicture);
-    m_nLastRenderedTime = clock();
+    int64_t curTime = timeutil::GetSystemTimeMicrosecond();
+    int64_t waitDuration = m_fFrameDuration * 1000 + int64_t(m_nLastRenderedTime - curTime);
+    if(waitDuration > 0)
+    {
+//        MyLog(info, "wait duration = %.2f ms\n", (double)waitDuration/1000);
+        usleep(waitDuration);
+    }
+    m_nLastRenderedTime = timeutil::GetSystemTimeMicrosecond();
 }
 
 void MainWindow::processDecodeThreadExit(bool bIsOccurExit)

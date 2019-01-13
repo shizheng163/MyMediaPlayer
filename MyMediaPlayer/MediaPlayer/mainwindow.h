@@ -52,7 +52,7 @@ private:
     std::mutex                  m_mutexForDecoder;
     ffmpegutil::FFDecoder       *m_pDecoder;
     float                       m_fFrameDuration; //ms
-    long                        m_nLastRenderedTime;
+    int64_t                     m_nLastRenderedTime;
 };
 
 #endif // MAINWINDOW_H
