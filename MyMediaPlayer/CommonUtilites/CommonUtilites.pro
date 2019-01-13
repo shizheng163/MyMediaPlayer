@@ -14,9 +14,11 @@ DESTDIR = $$PWD/../../build/debug
 
 SOURCES += \
     logutil.cpp \
-    fileutil.cpp
+    fileutil.cpp \
+    timeutil.cpp
 
 HEADERS += \
     logutil.h \
-    fileutil.h
+    fileutil.h \
+    timeutil.h
 
