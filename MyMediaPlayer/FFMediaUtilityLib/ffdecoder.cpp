@@ -66,6 +66,14 @@ bool FFDecoder::InitializeDecoder(string url)
         m_szErrName = MySprintf("FFDecoder open input failed, url = %s, err: %s", m_szUrl.c_str(), GetStrError(ret).c_str());
         return false;
     }
+    //先调用avformat_find_stream_info, 没有文件头的文件需要探测。
+    ret = avformat_find_stream_info(m_pInputFormatContext, NULL);
+    if(ret < 0)
+    {
+        m_szErrName = MySprintf("FFDecoder find stream info failed, url = %s, err: %s", m_szUrl.c_str(), GetStrError(ret).c_str());
+        return false;
+    }
+
     for(unsigned i = 0; i < m_pInputFormatContext->nb_streams; i++)
     {
         if(m_pInputFormatContext->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
@@ -78,13 +86,6 @@ bool FFDecoder::InitializeDecoder(string url)
     if( m_nVideoStreamIndex == -1)
     {
         m_szErrName = MySprintf("FFDecoder could find video stream, url = %s", m_szUrl.c_str());
-        return false;
-    }
-
-    ret = avformat_find_stream_info(m_pInputFormatContext, NULL);
-    if(ret < 0)
-    {
-        m_szErrName = MySprintf("FFDecoder find stream info failed, url = %s, err: %s", m_szUrl.c_str(), GetStrError(ret).c_str());
         return false;
     }
 
