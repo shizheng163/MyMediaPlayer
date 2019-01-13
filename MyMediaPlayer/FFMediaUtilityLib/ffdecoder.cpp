@@ -28,13 +28,20 @@ FFDecoder::FFDecoder()
     :m_pInputFormatContext(NULL)
     ,m_nVideoStreamIndex(-1)
     ,m_pCodecContext(NULL)
+    ,m_bIsPause(false)
 {
 }
 
 FFDecoder::~FFDecoder()
 {
+    unique_lock<mutex> locker(m_mutexForPauseContionval);
+    m_bIsPause = false;
+    m_conditionvalForPause.notify_one();
+    locker.unlock();
+
     if(m_threadForDecode.joinable())
         m_threadForDecode.join();
+
 
     if(m_pInputFormatContext)
     {
@@ -148,6 +155,20 @@ float FFDecoder::GetVideoFrameRate()
     return 0;
 }
 
+void FFDecoder::PauseSwitch()
+{
+    unique_lock<mutex> locker(m_mutexForPauseContionval);
+    m_bIsPause = !m_bIsPause;
+    if(!m_bIsPause)
+        m_conditionvalForPause.notify_one();
+}
+
+bool FFDecoder::IsPause()
+{
+    unique_lock<mutex> locker(m_mutexForPauseContionval);
+    return m_bIsPause;
+}
+
 void FFDecoder::decodeInThread()
 {
     bool isEof = false;
@@ -208,6 +229,12 @@ void FFDecoder::decodeInThread()
                     data.AppendData(pFrameScale->data[2], pVideoStream->codecpar->width * pVideoStream->codecpar->height / 4);
                     YuvDataPtr pYuvData(new fileutil::PictureFile(data, pVideoStream->codecpar->width, pVideoStream->codecpar->height, fileutil::PictureFile::kFormatYuv));
                     pYuvData->m_filename = to_string(pVideoStream->codec_info_nb_frames);
+                    unique_lock<mutex> lockerForPause(m_mutexForPauseContionval);
+                    while(m_bIsPause)
+                    {
+                        m_conditionvalForPause.wait(lockerForPause);
+                    }
+                    lockerForPause.unlock();
                     std::unique_lock<mutex> locker(m_mutexForFnProcessYuvData);
                     if(m_fnProcssYuvData)
                         m_fnProcssYuvData(pYuvData);

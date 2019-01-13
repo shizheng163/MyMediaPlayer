@@ -12,6 +12,7 @@
 #include <functional>
 #include <mutex>
 #include <thread>
+#include <condition_variable>
 struct AVFormatContext;
 struct AVFrame;
 struct AVCodecContext;
@@ -44,6 +45,15 @@ public:
      * @brief 获取视频帧率
      */
     float GetVideoFrameRate();
+
+    /**
+     * @brief 暂停状态切换
+     * @note 第一次调用为暂停, 第二次调用为播放
+     */
+    void  PauseSwitch();
+
+    bool  IsPause();
+
 private:
 
     void decodeInThread();
@@ -65,6 +75,10 @@ private:
     //处理解码线程退出的回调函数
     std::mutex                  m_mutexForFnThreadExit;
     DecodeThreadExitCallback    m_fnThreadExit;
+
+    std::mutex                  m_mutexForPauseContionval;
+    bool                        m_bIsPause;
+    std::condition_variable     m_conditionvalForPause;
 };
 }//namespace ffmpegutil
 
