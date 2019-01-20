@@ -1,4 +1,4 @@
-/*
+﻿/*
 Copyright © 2018-2019 shizheng. All Rights Reserved.
 日期: 2019-1-13
 作者: 史正
@@ -17,12 +17,12 @@ fileutil::FileRawDataPtr fileutil::ReadFileRawData(std::string filename)
         MyLog(err, "ReadFileRawData Failed, Filename is not existed:%s\n", filename);
         return NULL;
     }
-    FileRawDataPtr pFileRawData(new FileRawData);
+    FileRawDataPtr pFileRawData(new RawData);
     FILE * fFile = fopen(filename.c_str(), "rb");
     fseek(fFile, 0, SEEK_END);
     pFileRawData->m_uLen = ftell(fFile);
     pFileRawData->m_pData = new uint8_t[pFileRawData->m_uLen];
-    pFileRawData->m_filename = filename;
+    pFileRawData->m_szDataDescribe = filename;
     fseek(fFile, 0, SEEK_SET);
     fread(pFileRawData->m_pData, sizeof(uint8_t), pFileRawData->m_uLen, fFile);
     fclose(fFile);

@@ -12,22 +12,22 @@
 #include <memory>
 namespace fileutil {
 
-struct FileRawData
+struct RawData
 {
-    FileRawData(){
+    RawData(){
         m_pData = NULL;
         m_uLen = 0;
     }
-    FileRawData(FileRawData && filedata)
+    RawData(RawData && filedata)
     {
         m_pData = filedata.m_pData;
         m_uLen = filedata.m_uLen;
-        m_filename = filedata.m_filename;
+        m_szDataDescribe = filedata.m_szDataDescribe;
         filedata.m_pData = NULL;
         filedata.m_uLen = 0;
-        filedata.m_filename.clear();
+        filedata.m_szDataDescribe.clear();
     }
-    ~FileRawData()
+    ~RawData()
     {
         if(m_pData)
             delete m_pData;
@@ -46,18 +46,21 @@ struct FileRawData
     }
     uint8_t *   m_pData;
     uint32_t    m_uLen;
-    std::string m_filename;
+    /**
+     * @brief 数据描述, 可以是文件名/当前第几帧/第多少次采样
+     */
+    std::string m_szDataDescribe;
 };
-typedef std::shared_ptr<FileRawData> FileRawDataPtr;
-struct PictureFile: public FileRawData
+typedef std::shared_ptr<RawData> FileRawDataPtr;
+struct PictureFile: public RawData
 {
     enum PictureFormat
     {
         kFormatYuv,
         kFormatJpeg
     };
-    PictureFile(FileRawData & parent, uint32_t nWeight, uint32_t nHeight, PictureFormat pictFormat)
-        :FileRawData(std::move(parent))
+    PictureFile(RawData & parent, uint32_t nWeight, uint32_t nHeight, PictureFormat pictFormat)
+        :RawData(std::move(parent))
         ,m_nWeight(nWeight)
         ,m_nHeight(nHeight)
         ,m_pictFormat(pictFormat)

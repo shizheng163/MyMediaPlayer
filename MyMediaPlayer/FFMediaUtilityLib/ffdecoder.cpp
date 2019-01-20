@@ -224,12 +224,12 @@ void FFDecoder::decodeInThread()
                                (uint8_t* const*)pFrameScale->data, pFrameScale->linesize);
                 if(ret > 0)
                 {
-                    fileutil::FileRawData data;
+                    fileutil::RawData data;
                     data.AppendData(pFrameScale->data[0], pVideoStream->codecpar->width * pVideoStream->codecpar->height);
                     data.AppendData(pFrameScale->data[1], pVideoStream->codecpar->width * pVideoStream->codecpar->height / 4);
                     data.AppendData(pFrameScale->data[2], pVideoStream->codecpar->width * pVideoStream->codecpar->height / 4);
                     YuvDataPtr pYuvData(new fileutil::PictureFile(data, pVideoStream->codecpar->width, pVideoStream->codecpar->height, fileutil::PictureFile::kFormatYuv));
-                    pYuvData->m_filename = to_string(pVideoStream->codec_info_nb_frames);
+                    pYuvData->m_szDataDescribe = to_string(pVideoStream->codec_info_nb_frames);
                     unique_lock<mutex> lockerForPause(m_mutexForPauseContionval);
                     while(m_bIsPause)
                     {
