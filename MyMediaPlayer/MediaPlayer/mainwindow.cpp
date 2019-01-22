@@ -27,6 +27,7 @@
 #include "ffdecoder.h"
 #include "ffmpegutil.h"
 #include "timeutil.h"
+#include "datadelaytask.h"
 using namespace std;
 using namespace logutil;
 using namespace fileutil;
@@ -35,8 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
     ,ui(new Ui::MainWindow)
     ,m_pVideoGLWidget(NULL)
     ,m_pDecoder(NULL)
-    ,m_fFrameDuration(40)
-    ,m_nLastRenderedTime(0)
+    ,m_pAudioOutput(NULL)
+    ,m_pAudioIODevice(NULL)
 {
     //布局
     ui->setupUi(this);
@@ -72,9 +73,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    this->closeDecoder();
     delete ui;
     delete m_pVideoGLWidget;
-    this->closeDecoder();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -138,12 +139,18 @@ void MainWindow::playMedia(QString url)
         m_pDecoder = NULL;
         return;
     }
-    m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processYuv, this, std::placeholders::_1));
+    m_uThreshold = 0;
+    m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processMediaRawData, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     m_pDecoder->SetDecodeThreadExitCallback(std::bind(&MainWindow::processDecodeThreadExit, this, std::placeholders::_1));
-    //帧率保留两位小数, 四舍五入
-    float frameRate = m_pDecoder->GetVideoFrameRate() + 0.005;
-    m_fFrameDuration = 100000.0/int(frameRate * 100);
-    m_nLastRenderedTime = timeutil::GetSystemTimeMicrosecond();
+    m_pDecoder->GetVideoSize(&m_uVideoWidth, &m_uVideoHeight);
+    if(m_uVideoWidth != 0 && m_uVideoHeight != 0)
+        m_uBenchmark = ffmpegutil::DataDelayTask::kStreamVideo;
+    else
+        m_uBenchmark = ffmpegutil::DataDelayTask::kStreamAudio;
+
+    this->closeAudioContext();
+    this->initAudioContext(m_pDecoder->GetAudioSampleRate(), m_pDecoder->GetAudioChannelNum(), m_pDecoder->GetAudioSampleSize());
+
     if(!m_pDecoder->StartDecodeThread())
     {
         ui->m_pLabProcessBar->setText("StartDecodeThread:" + QString(m_pDecoder->ErrName().c_str()));
@@ -171,17 +178,36 @@ void MainWindow::pauseSwitchMedia()
     }
 }
 
-void MainWindow::processYuv(PictureFilePtr pPicture)
+void MainWindow::processMediaRawData(RawDataPtr pRawData, unsigned uPlayTime, unsigned streamType)
 {
-    m_pVideoGLWidget->PictureShow(pPicture);
-    int64_t curTime = timeutil::GetSystemTimeMicrosecond();
-    int64_t waitDuration = m_fFrameDuration * 1000 + int64_t(m_nLastRenderedTime - curTime);
-    if(waitDuration > 0)
+    //有视频时以视频为基准
+    if(streamType == ffmpegutil::DataDelayTask::kStreamVideo)
     {
-        //        MyLog(info, "wait duration = %.2f ms\n", (double)waitDuration/1000);
-        usleep(waitDuration);
+        m_pVideoGLWidget->PictureShow(pRawData, m_uVideoWidth, m_uVideoHeight);
+        ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
+        m_uThreshold = uPlayTime;
+        while(!m_queueForAudioData.empty())
+        {
+            MediaData & data = m_queueForAudioData.front();
+            if(data.uPlayTime > m_uThreshold)
+                break;
+            m_queueForAudioData.pop();
+        }
     }
-    m_nLastRenderedTime = timeutil::GetSystemTimeMicrosecond();
+    else if(streamType == ffmpegutil::DataDelayTask::kStreamAudio)
+    {
+        //如果以音频为基准
+        if(m_uBenchmark == ffmpegutil::DataDelayTask::kStreamAudio)
+        {
+            m_uThreshold = uPlayTime;
+            ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
+            playAudio(pRawData);
+        }
+        else if(uPlayTime <= m_uThreshold)
+            playAudio(pRawData);
+        else
+            m_queueForAudioData.push({uPlayTime, pRawData});
+    }
 }
 
 void MainWindow::processDecodeThreadExit(bool bIsOccurExit)
@@ -208,4 +234,40 @@ void MainWindow::closeDecoder()
         delete m_pDecoder;
         m_pDecoder = NULL;
     }
+}
+
+void MainWindow::closeAudioContext()
+{
+    unique_lock<mutex> locker(m_mutexForAudioOutput);
+    if(m_pAudioOutput)
+    {
+        m_pAudioOutput->stop();
+        delete m_pAudioOutput;
+        m_pAudioOutput = NULL;
+        m_pAudioIODevice = NULL;
+    }
+}
+
+void MainWindow::initAudioContext(unsigned sampleRate, unsigned channelNum, unsigned sampleSize)
+{
+    unique_lock<mutex> locker(m_mutexForAudioOutput);
+    //没有音频时会返回0
+    if(sampleRate != 0)
+    {
+        QAudioFormat audioFormat;
+        audioFormat.setSampleRate(sampleRate);
+        audioFormat.setChannelCount(channelNum);
+        audioFormat.setSampleSize(sampleSize);
+        audioFormat.setSampleType(QAudioFormat::SignedInt);
+        audioFormat.setCodec("audio/pcm");
+        m_pAudioOutput = new QAudioOutput(audioFormat);
+        m_pAudioIODevice = m_pAudioOutput->start();
+    }
+}
+
+void MainWindow::playAudio(RawDataPtr pRawData)
+{
+    unique_lock<mutex> locker(m_mutexForAudioOutput);
+    if(m_pAudioIODevice)
+        m_pAudioIODevice->write((char *)pRawData->m_pData, pRawData->m_uLen);
 }

@@ -13,6 +13,8 @@
 #include <string>
 #include <memory>
 #include <stdint.h>
+#include <queue>
+#include <QAudioOutput>
 #include "videoglwidget.h"
 
 
@@ -45,19 +47,43 @@ private:
     void                        playMedia(QString url);
     void                        stopMedia();
     void                        pauseSwitchMedia();
-    void                        processYuv(fileutil::PictureFilePtr pPicture);
+    void                        processMediaRawData(fileutil::RawDataPtr pRawData, unsigned uPlayTime, unsigned streamType);
     void                        processDecodeThreadExit(bool bIsOccurExit);
     void                        closeDecoder();
-
+    void                        closeAudioContext();
+    /**
+     * @brief 初始化音频环境
+     * @param sampleRate: 采样率
+     * @param channelNum: 通道数
+     * @param sampleSize: 采样大小(Bit)
+     */
+    void                        initAudioContext(unsigned sampleRate, unsigned channelNum, unsigned sampleSize);
+    void                        playAudio(fileutil::RawDataPtr pRawData);
     Ui::MainWindow *ui;
 
-    VideoGLWidget               *m_pVideoGLWidget;
+    VideoGLWidget           *m_pVideoGLWidget;
 
+    unsigned                m_uVideoWidth;
+    unsigned                m_uVideoHeight;
     //解码
-    std::mutex                  m_mutexForDecoder;
-    ffmpegutil::FFDecoder       *m_pDecoder;
-    float                       m_fFrameDuration; //ms
-    int64_t                     m_nLastRenderedTime;
+    std::mutex              m_mutexForDecoder;
+    ffmpegutil::FFDecoder   *m_pDecoder;
+
+    //当前渲染数据的阈值, 大于此值得数据将被缓冲
+    unsigned                m_uThreshold;
+    struct MediaData
+    {
+        unsigned                uPlayTime;
+        fileutil::RawDataPtr    pMediaData;
+    };
+    std::queue<MediaData>   m_queueForAudioData;
+    //媒体流同步的基准, 等于ffmpegutil::DataDelayTask::StreamType
+    unsigned                m_uBenchmark;
+
+    //音频播放
+    std::mutex              m_mutexForAudioOutput;
+    QAudioOutput            *m_pAudioOutput;
+    QIODevice               *m_pAudioIODevice;
 };
 
 #endif // MAINWINDOW_H

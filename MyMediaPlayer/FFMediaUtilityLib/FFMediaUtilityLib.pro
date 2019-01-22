@@ -21,8 +21,10 @@ win32 {
 }
 SOURCES += \
     ffdecoder.cpp \
-    ffmpegutil.cpp
+    ffmpegutil.cpp \
+    datadelaytask.cpp
 
 HEADERS += \
     ffdecoder.h \
-    ffmpegutil.h
+    ffmpegutil.h \
+    datadelaytask.h

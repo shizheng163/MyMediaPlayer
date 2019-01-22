@@ -13,15 +13,19 @@
 #include <mutex>
 #include <thread>
 #include <condition_variable>
+#include <datadelaytask.h>
 struct AVFormatContext;
 struct AVFrame;
 struct AVCodecContext;
+struct SwsContext;
+struct SwrContext;
 namespace ffmpegutil {
 typedef fileutil::PictureFilePtr YuvDataPtr;
+typedef std::shared_ptr<AVFrame> AVFramePtr;
 class FFDecoder
 {
 public:
-    typedef std::function<void (YuvDataPtr pYuvData) > ProcessYuvDataCallback;
+
     typedef std::function<void (bool bIsOccurErr) > DecodeThreadExitCallback;
     FFDecoder();
     ~FFDecoder();
@@ -31,7 +35,7 @@ public:
     /**
      * @brief 设置解码数据回调函数
      */
-    void SetProcessDataCallback(ProcessYuvDataCallback callback);
+    void SetProcessDataCallback(DataDelayTask::ProcessRawDataCallback callback);
     /**
      * @brief 设置解码线程退出的回调函数
      */
@@ -47,6 +51,26 @@ public:
     float GetVideoFrameRate();
 
     /**
+     * @brief 获取视频的尺寸
+     */
+    bool GetVideoSize(unsigned *width, unsigned *height);
+
+    /**
+     * @brief 获取音频的采样率
+     */
+    int GetAudioSampleRate();
+
+    /**
+     * @brief 获取音频通道数
+     */
+    int GetAudioChannelNum();
+
+    /**
+     * @brief 获取采样大小 bit
+     */
+    int GetAudioSampleSize();
+
+    /**
      * @brief 暂停状态切换
      * @note 第一次调用为暂停, 第二次调用为播放
      */
@@ -55,17 +79,30 @@ public:
     bool  IsPause();
 
 private:
-
+    /**
+     * @brief 创建解码环境
+     * @param pCodecContext: 需要初始化的解码环境上下文
+     * @param streamIndex: 媒体流的索引
+     */
+    bool InitDecodeContext(AVCodecContext ** pCodecContext, int streamIndex);
     void decodeInThread();
 
     std::string                 m_szUrl;
     AVFormatContext             *m_pInputFormatContext;
+    bool                        m_bIsInitDecoder;
+    //视频解码环境
     int                         m_nVideoStreamIndex;
-    AVCodecContext              *m_pCodecContext;
+    AVCodecContext              *m_pVideoCodecContext;
+    //视频解码后变换颜色空间格式后存储数据的结构
+    AVFramePtr                  m_pVideoImageFrame;
+    //颜色空间变换上下文
+    SwsContext                  *m_pSwsContext;
 
-    //处理解码后数据的回调函数
-    std::mutex                  m_mutexForFnProcessYuvData;
-    ProcessYuvDataCallback      m_fnProcssYuvData;
+    //音频解码环境
+    int                         m_nAudioStreamIndex;
+    AVCodecContext              *m_pAudioCodecContext;
+    //音频排列格式转换上下文
+    SwrContext                  *m_pSwrContext;
 
     std::thread                 m_threadForDecode;
     bool                        m_bIsRunDecodeThread;
@@ -76,9 +113,11 @@ private:
     std::mutex                  m_mutexForFnThreadExit;
     DecodeThreadExitCallback    m_fnThreadExit;
 
-    std::mutex                  m_mutexForPauseContionval;
     bool                        m_bIsPause;
-    std::condition_variable     m_conditionvalForPause;
+
+    //数据延迟
+    DataDelayTask               *m_pVideoDelayTask;
+    DataDelayTask               *m_pAudioDelayTask;
 };
 }//namespace ffmpegutil
 

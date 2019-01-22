@@ -21,7 +21,7 @@ class VideoGLWidget : public QOpenGLWidget, protected QOpenGLFunctions
 public:
     VideoGLWidget(QWidget * pParent = 0);
     virtual                 ~VideoGLWidget();
-    void                    PictureShow(fileutil::PictureFilePtr pPicture);
+    void                    PictureShow(fileutil::RawDataPtr pPicture, int frameWidth, int frameHeight);
     void                    DefaultPictureShow();
 
 protected:
@@ -33,8 +33,11 @@ private:
     //绘图是异步动作， 防止绘图过程中，图片被置为NULL，所以需要加锁
     std::mutex                  m_mutexForShowYuvData;
     bool                        m_bIsShowVideoIcon; //是否要显示视频默认图标
-    fileutil::PictureFilePtr    m_pDefaultPict;//默认图片
-    fileutil::PictureFilePtr    m_pYuvPictPtr;//当前需要显示的Yuv数据
+    fileutil::RawDataPtr        m_pDefaultPict;//默认图片
+    fileutil::RawDataPtr        m_pYuvPictPtr;//当前需要显示的Yuv数据
+
+    int                         m_nPictureWidth;
+    int                         m_nPictureHeight;
 
     //显示Opengl渲染后图像位置
     QRect                       m_drawRect;

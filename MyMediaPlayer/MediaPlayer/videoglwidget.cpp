@@ -73,10 +73,12 @@ VideoGLWidget::~VideoGLWidget()
     }
 }
 
-void VideoGLWidget::PictureShow(PictureFilePtr pPicture)
+void VideoGLWidget::PictureShow(fileutil::RawDataPtr pPicture, int frameWidth, int frameHeight)
 {
     std::unique_lock<std::mutex> locker(m_mutexForShowYuvData);
     m_pYuvPictPtr = pPicture;
+    m_nPictureHeight = frameHeight;
+    m_nPictureWidth = frameWidth;
     m_drawRect = QRect(0, 0, width(), height());
     this->update();
 }
@@ -85,12 +87,10 @@ void VideoGLWidget::DefaultPictureShow()
 {
     std::unique_lock<std::mutex> locker(m_mutexForShowYuvData);
     if(!m_pDefaultPict)
-    {
-        FileRawDataPtr pFileData = fileutil::ReadFileRawData("../../images/video.yuv");
-        if(pFileData)
-            m_pDefaultPict = PictureFilePtr(new PictureFile(*pFileData.get(), DEFAULT_ICO_PIX_WIDTH, DEFAULT_ICO_PIX_HEIGHT, PictureFile::kFormatYuv));
-    }
+        m_pDefaultPict = fileutil::ReadFileRawData("../../images/video.yuv");
     m_pYuvPictPtr = m_pDefaultPict;
+    m_nPictureHeight = DEFAULT_ICO_PIX_WIDTH;
+    m_nPictureWidth = DEFAULT_ICO_PIX_HEIGHT;
     m_drawRect = QRect((width() - DEFAULT_ICO_VIEW_WIDTH)/2, (height() - DEFAULT_ICO_VIEW_HEIGHT) /2, DEFAULT_ICO_VIEW_WIDTH, DEFAULT_ICO_VIEW_HEIGHT);
     this->update();
 }
@@ -209,9 +209,6 @@ void VideoGLWidget::paintGL()
     std::unique_lock<std::mutex> locker(m_mutexForShowYuvData);
     if(m_pYuvPictPtr)
     {
-        //        clock_t start = clock();
-        uint32_t weight = m_pYuvPictPtr->m_nWeight;
-        uint32_t height = m_pYuvPictPtr->m_nHeight;
         glViewport(m_drawRect.x(), m_drawRect.y(), m_drawRect.width(), m_drawRect.height());
         //加载y数据纹理
         //激活纹理单元GL_TEXTURE0
@@ -219,7 +216,7 @@ void VideoGLWidget::paintGL()
         //使用来自y数据生成纹理
         glBindTexture(GL_TEXTURE_2D, id_y);
         //使用内存中m_pBufYuv420p数据创建真正的y数据纹理
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, weight, height, 0, GL_RED, GL_UNSIGNED_BYTE, m_pYuvPictPtr->m_pData);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_nPictureWidth, m_nPictureHeight, 0, GL_RED, GL_UNSIGNED_BYTE, m_pYuvPictPtr->m_pData);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -227,7 +224,7 @@ void VideoGLWidget::paintGL()
         //加载u数据纹理
         glActiveTexture(GL_TEXTURE1);//激活纹理单元GL_TEXTURE1
         glBindTexture(GL_TEXTURE_2D, id_u);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, weight/2, height/2, 0, GL_RED, GL_UNSIGNED_BYTE, (char*)m_pYuvPictPtr->m_pData+weight*height);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_nPictureWidth/2, m_nPictureHeight/2, 0, GL_RED, GL_UNSIGNED_BYTE, (char*)m_pYuvPictPtr->m_pData+m_nPictureWidth*m_nPictureHeight);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -236,7 +233,7 @@ void VideoGLWidget::paintGL()
         //加载v数据纹理
         glActiveTexture(GL_TEXTURE2);//激活纹理单元GL_TEXTURE2
         glBindTexture(GL_TEXTURE_2D, id_v);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, weight/2, height/2, 0, GL_RED, GL_UNSIGNED_BYTE, (char*)m_pYuvPictPtr->m_pData+weight*height*5/4);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_nPictureWidth/2, m_nPictureHeight/2, 0, GL_RED, GL_UNSIGNED_BYTE, (char*)m_pYuvPictPtr->m_pData+m_nPictureWidth*m_nPictureHeight*5/4);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -250,6 +247,5 @@ void VideoGLWidget::paintGL()
         glUniform1i(textureUniformV, 2);
         //使用顶点数组方式绘制图形
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-        //        clock_t end = clock();
     }
 }
