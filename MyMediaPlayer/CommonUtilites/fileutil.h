@@ -10,6 +10,7 @@
 #include <string>
 #include <stdint.h>
 #include <memory>
+#include <iostream>
 namespace fileutil {
 
 struct RawData
@@ -47,11 +48,12 @@ struct RawData
     uint8_t *   m_pData;
     uint32_t    m_uLen;
     /**
-     * @brief 数据描述, 可以是文件名/当前第几帧/第多少次采样
+     * @brief 数据描述, 可以是文件名/当前第几帧/第多少次采样/播放时间
      */
     std::string m_szDataDescribe;
 };
 typedef std::shared_ptr<RawData> FileRawDataPtr;
+typedef std::shared_ptr<RawData> RawDataPtr;
 struct PictureFile: public RawData
 {
     enum PictureFormat

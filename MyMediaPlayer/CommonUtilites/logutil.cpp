@@ -1,12 +1,14 @@
-/*
-Copyright © 2018-2019 shizheng. All Rights Reserved.
-日期: 2019-1-13
-作者: 史正
-邮箱: shizheng163@126.com
-*/
+﻿/*
+ * copyright (c) 2018-2019 shizheng. All Rights Reserved.
+ * Please retain author information for reference code
+ * date:   2019-1-13
+ * author: shizheng
+ * email:  shizheng163@126.com
+ */
 #include "logutil.h"
 #include <unordered_map>
 #include <iostream>
+#include <mutex>
 #define BUFFSIZE 65536
 const static std::unordered_map<int, std::string> g_logTypeStringMap=
 {
@@ -20,6 +22,8 @@ const static std::unordered_map<int, std::string> g_logTypeStringMap=
 
 void logutil::MyLog(logutil::MyLogType type, const char *fmt, ...)
 {
+    static std::mutex logMutex;
+    std::unique_lock<std::mutex> locker(logMutex);
     char pBuff[BUFFSIZE];
     va_list valist;
     va_start(valist, fmt);
