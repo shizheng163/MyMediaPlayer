@@ -245,6 +245,12 @@ void VideoGLWidget::paintGL()
         glUniform1i(textureUniformU, 1);
         //指定v纹理要使用新值
         glUniform1i(textureUniformV, 2);
+        /*
+         * OpenGL要求所有的纹理都是4字节对齐的，即纹理的大小永远是4字节的倍数。
+         * 通常这并不会出现什么问题，因为大部分纹理的宽度都为4的倍数并/或每像素使用4个字节。
+         * 当图片宽高不是4的倍数时会出现的情况。通过将纹理解压对齐参数设为1，这样才能确保不会有对齐问题。
+         */
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         //使用顶点数组方式绘制图形
         glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     }
