@@ -59,6 +59,17 @@ private:
      */
     void                        initAudioContext(unsigned sampleRate, unsigned channelNum, unsigned sampleSize);
     void                        playAudio(fileutil::RawDataPtr pRawData);
+    /**
+     * @brief 播放缓冲队列中播放时间小于阈值的缓冲数据
+     * @param threshold: 阈值, 小于此值得缓冲数据会被播放
+     */
+    void                        playBufferMediaData(unsigned threshold);
+    /**
+     * @brief 插入一个数据到缓存队列
+     * @param pRawData
+     * @param streamType: 媒体类型, ffmpegutil::DataDelayTask::StreamType
+     */
+    void                        insertMediaDataToBuffer(fileutil::RawDataPtr pRawData, unsigned streamType, unsigned uPlayTime);
     Ui::MainWindow *ui;
 
     VideoGLWidget           *m_pVideoGLWidget;
@@ -74,9 +85,12 @@ private:
     struct MediaData
     {
         unsigned                uPlayTime;
+        unsigned                uMediaType; //等于ffmpegutil::DataDelayTask::StreamType
         fileutil::RawDataPtr    pMediaData;
     };
-    std::queue<MediaData>   m_queueForAudioData;
+    //非播放同步基准媒体流的数据都将被缓冲
+    std::mutex              m_mutexForBufferList;
+    std::list<MediaData>    m_listForMediaDataBuffer;
     //媒体流同步的基准, 等于ffmpegutil::DataDelayTask::StreamType
     unsigned                m_uBenchmark;
 

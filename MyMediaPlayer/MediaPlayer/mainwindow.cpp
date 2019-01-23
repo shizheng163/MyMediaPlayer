@@ -143,10 +143,7 @@ void MainWindow::playMedia(QString url)
     m_pDecoder->SetProcessDataCallback(std::bind(&MainWindow::processMediaRawData, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
     m_pDecoder->SetDecodeThreadExitCallback(std::bind(&MainWindow::processDecodeThreadExit, this, std::placeholders::_1));
     m_pDecoder->GetVideoSize(&m_uVideoWidth, &m_uVideoHeight);
-    if(m_uVideoWidth != 0 && m_uVideoHeight != 0)
-        m_uBenchmark = ffmpegutil::DataDelayTask::kStreamVideo;
-    else
-        m_uBenchmark = ffmpegutil::DataDelayTask::kStreamAudio;
+    m_uBenchmark = m_pDecoder->GetPlayBenchmark();
 
     this->closeAudioContext();
     this->initAudioContext(m_pDecoder->GetAudioSampleRate(), m_pDecoder->GetAudioChannelNum(), m_pDecoder->GetAudioSampleSize());
@@ -180,36 +177,31 @@ void MainWindow::pauseSwitchMedia()
 
 void MainWindow::processMediaRawData(RawDataPtr pRawData, unsigned uPlayTime, unsigned streamType)
 {
-    //有视频时以视频为基准
-    if(streamType == ffmpegutil::DataDelayTask::kStreamVideo)
+    if(streamType == m_uBenchmark)
     {
-        m_pVideoGLWidget->PictureShow(pRawData, m_uVideoWidth, m_uVideoHeight);
-        ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
+        if(streamType == ffmpegutil::DataDelayTask::kStreamVideo)
+            m_pVideoGLWidget->PictureShow(pRawData, m_uVideoWidth, m_uVideoHeight);
+        if(streamType == ffmpegutil::DataDelayTask::kStreamAudio)
+            playAudio(pRawData);
         m_uThreshold = uPlayTime;
-        while(!m_queueForAudioData.empty())
-        {
-            MediaData & data = m_queueForAudioData.front();
-            if(data.uPlayTime > m_uThreshold)
-                break;
-            m_queueForAudioData.pop();
-        }
+        ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
+        playBufferMediaData(m_uThreshold);
+    }
+    else if(streamType == ffmpegutil::DataDelayTask::kStreamVideo)
+    {
+        if(uPlayTime <= m_uThreshold)
+            m_pVideoGLWidget->PictureShow(pRawData, m_uVideoWidth, m_uVideoHeight);
+        else
+            insertMediaDataToBuffer(pRawData, streamType, uPlayTime);
     }
     else if(streamType == ffmpegutil::DataDelayTask::kStreamAudio)
     {
-        //如果以音频为基准
-        if(m_uBenchmark == ffmpegutil::DataDelayTask::kStreamAudio)
-        {
-            m_uThreshold = uPlayTime;
-            ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
-            playAudio(pRawData);
-        }
-        else if(uPlayTime <= m_uThreshold)
+        if(uPlayTime <= m_uThreshold)
             playAudio(pRawData);
         else
-            m_queueForAudioData.push({uPlayTime, pRawData});
+            insertMediaDataToBuffer(pRawData, streamType, uPlayTime);
     }
 }
-
 void MainWindow::processDecodeThreadExit(bool bIsOccurExit)
 {
     if(bIsOccurExit)
@@ -233,6 +225,7 @@ void MainWindow::closeDecoder()
         m_pDecoder->SetDecodeThreadExitCallback(NULL);
         delete m_pDecoder;
         m_pDecoder = NULL;
+        m_listForMediaDataBuffer.clear();
     }
 }
 
@@ -270,4 +263,41 @@ void MainWindow::playAudio(RawDataPtr pRawData)
     unique_lock<mutex> locker(m_mutexForAudioOutput);
     if(m_pAudioIODevice)
         m_pAudioIODevice->write((char *)pRawData->m_pData, pRawData->m_uLen);
+}
+
+void MainWindow::playBufferMediaData(unsigned threshold)
+{
+    unique_lock<mutex> locker(m_mutexForBufferList);
+    while(!m_listForMediaDataBuffer.empty())
+    {
+        MediaData & data = m_listForMediaDataBuffer.front();
+        if(data.uPlayTime > threshold)
+            break;
+        if(data.uMediaType == ffmpegutil::DataDelayTask::kStreamAudio)
+            playAudio(data.pMediaData);
+        else if(data.uMediaType == ffmpegutil::DataDelayTask::kStreamVideo)
+            m_pVideoGLWidget->PictureShow(data.pMediaData, m_uVideoWidth, m_uVideoHeight);
+        m_listForMediaDataBuffer.pop_front();
+    }
+}
+
+void MainWindow::insertMediaDataToBuffer(RawDataPtr pRawData, unsigned streamType, unsigned uPlayTime)
+{
+    unique_lock<mutex> locker(m_mutexForBufferList);
+    MediaData data;
+    data.pMediaData = pRawData;
+    data.uPlayTime = uPlayTime;
+    data.uMediaType = streamType;
+    if(m_listForMediaDataBuffer.empty())
+        m_listForMediaDataBuffer.push_back(data);
+    for(auto iter = m_listForMediaDataBuffer.rbegin(); iter != m_listForMediaDataBuffer.rend(); iter++)
+    {
+        MediaData & curData = *iter;
+        if(curData.uPlayTime <= data.uPlayTime)
+        {
+            m_listForMediaDataBuffer.insert(++iter.base(), data);
+            return;
+        }
+    }
+    m_listForMediaDataBuffer.insert(m_listForMediaDataBuffer.begin(), data);
 }
