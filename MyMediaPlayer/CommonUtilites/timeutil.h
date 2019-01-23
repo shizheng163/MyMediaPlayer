@@ -8,11 +8,12 @@
 #ifndef TIMEUTIL_H
 #define TIMEUTIL_H
 #include <stdint.h>
+#include <string>
 namespace timeutil {
 
 int64_t GetSystemTimeMicrosecond();
 
-
+std::string SecondToHHMMSS(unsigned inSecond);
 }//namespace timeutil
 
 #endif // TIMEUTIL_H

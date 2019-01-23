@@ -17,3 +17,13 @@ int64_t timeutil::GetSystemTimeMicrosecond()
     microClock_type tp = chrono::time_point_cast<chrono::microseconds>(chrono::system_clock::now());
     return tp.time_since_epoch().count();
 }
+
+string timeutil::SecondToHHMMSS(unsigned inSecond)
+{
+    int hour = inSecond / 3600;
+    int minute = (inSecond % 3600) /60;
+    int second = inSecond % 60;
+    char p[50]={0};
+    sprintf(p, "%02d:%02d:%02d", hour, minute, second);
+    return p;
+}
