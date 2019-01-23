@@ -290,6 +290,11 @@ DataDelayTask::StreamType FFDecoder::GetPlayBenchmark()
     return DataDelayTask::kStreamVideo;
 }
 
+unsigned FFDecoder::GetPlayDuration()
+{
+    return m_pInputFormatContext->duration / AV_TIME_BASE;
+}
+
 bool FFDecoder::InitDecodeContext(AVCodecContext **pCodecContext, int streamIndex)
 {
     int ret = 0;

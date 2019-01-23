@@ -85,6 +85,12 @@ public:
      */
     DataDelayTask::StreamType GetPlayBenchmark();
 
+    /**
+     * @brief 获取播放时长
+     * @return 播放时长的秒数
+     */
+    unsigned    GetPlayDuration();
+
 private:
     /**
      * @brief 创建解码环境
