@@ -78,6 +78,13 @@ public:
 
     bool  IsPause();
 
+    /**
+     * @brief 获取播放基准, 以哪个流作为基准播放
+     * @note 在多个流的情况下如果有视频以视频为基准, 否则为音频.
+     *       视频帧率如果为0(只有一张图片)那么以音频为基准
+     */
+    DataDelayTask::StreamType GetPlayBenchmark();
+
 private:
     /**
      * @brief 创建解码环境
@@ -118,6 +125,9 @@ private:
     //数据延迟
     DataDelayTask               *m_pVideoDelayTask;
     DataDelayTask               *m_pAudioDelayTask;
+
+    //计算时间戳需要
+    unsigned                    m_uVideoFrameCount;
 };
 }//namespace ffmpegutil
 

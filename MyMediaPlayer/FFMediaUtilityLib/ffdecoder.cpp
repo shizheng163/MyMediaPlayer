@@ -37,6 +37,7 @@ FFDecoder::FFDecoder()
     ,m_bIsPause(false)
     ,m_pVideoDelayTask(NULL)
     ,m_pAudioDelayTask(NULL)
+    ,m_uVideoFrameCount(0)
 {
 }
 
@@ -115,9 +116,7 @@ bool FFDecoder::InitializeDecoder(string url)
         m_szErrName = MySprintf("FFDecoder could find video/audio stream, url = %s", m_szUrl.c_str());
         return false;
     }
-
-    //    av_dump_format(m_pInputFormatContext, m_nVideoStreamIndex, NULL, 0);
-
+    //av_dump_format(m_pInputFormatContext, m_nVideoStreamIndex, NULL, 0);
     //初始化视频解码器
     if(m_nVideoStreamIndex != -1 && !InitDecodeContext(&m_pVideoCodecContext, m_nVideoStreamIndex))
         return false;
@@ -125,6 +124,7 @@ bool FFDecoder::InitializeDecoder(string url)
     {
         m_pVideoDelayTask = new DataDelayTask(DataDelayTask::kStreamVideo, m_pInputFormatContext->streams[m_nVideoStreamIndex]);
     }
+
     //初始化音频解码器
     if(m_nAudioStreamIndex != -1 && !InitDecodeContext(&m_pAudioCodecContext, m_nAudioStreamIndex))
         return false;
@@ -272,6 +272,24 @@ bool FFDecoder::IsPause()
     return m_bIsPause;
 }
 
+DataDelayTask::StreamType FFDecoder::GetPlayBenchmark()
+{
+    if(m_pInputFormatContext->nb_streams == 1)
+    {
+        if(m_nVideoStreamIndex != -1)
+            return DataDelayTask::kStreamVideo;
+        if(m_nAudioStreamIndex != -1)
+            return DataDelayTask::kStreamAudio;
+    }
+    else
+    {
+        if(m_nVideoStreamIndex != -1 && m_pInputFormatContext->streams[m_nVideoStreamIndex]->avg_frame_rate.num !=0)
+            return DataDelayTask::kStreamVideo;
+        return DataDelayTask::kStreamAudio;
+    }
+    return DataDelayTask::kStreamVideo;
+}
+
 bool FFDecoder::InitDecodeContext(AVCodecContext **pCodecContext, int streamIndex)
 {
     int ret = 0;
@@ -335,10 +353,19 @@ void FFDecoder::decodeInThread()
         AVFramePtr pTempFrame(av_frame_alloc(), [](AVFrame * ptr){
             av_frame_free(&ptr);
         });
-
         //解码
         if(ptrAVPacket->stream_index == m_nVideoStreamIndex)
         {
+            if(ptrAVPacket->pts==AV_NOPTS_VALUE){
+                AVRational time_base1=m_pInputFormatContext->streams[m_nVideoStreamIndex]->time_base;
+                //Duration between 2 frames (us)
+                int64_t calc_duration=(double)AV_TIME_BASE/av_q2d(m_pInputFormatContext->streams[m_nVideoStreamIndex]->r_frame_rate);
+                //Parameters
+                ptrAVPacket->pts=(double)(m_uVideoFrameCount*calc_duration)/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+                ptrAVPacket->dts=ptrAVPacket->pts;
+                ptrAVPacket->duration=(double)calc_duration/(double)(av_q2d(time_base1)*AV_TIME_BASE);
+            }
+            m_uVideoFrameCount++;
             ret = avcodec_send_packet(m_pVideoCodecContext, ptrAVPacket.get());
             while(1)
             {
