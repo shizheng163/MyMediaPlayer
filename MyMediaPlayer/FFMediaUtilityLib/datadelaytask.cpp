@@ -123,6 +123,8 @@ void DataDelayTask::runInThread()
 
         int64_t curTime = timeutil::GetSystemTimeMicrosecond();
         int64_t needWaitDuration = (data.nPts - m_streamInfo.nLastFramePts) * 1000000.0 * m_streamInfo.timebase.num / m_streamInfo.timebase.den;
+        //减去大约100us的处理时间
+        needWaitDuration -= 100;
         if(curTime < m_streamInfo.nLastSendTimeMicro + needWaitDuration)
         {
             int64_t waitDuration = m_streamInfo.nLastSendTimeMicro - curTime +  needWaitDuration;
