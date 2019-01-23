@@ -61,15 +61,15 @@ void DataDelayTask::PushData(fileutil::RawDataPtr pData, int64_t pts)
 {
     std::unique_lock<mutex> lockerForVideoQueue(m_mutexForMediaDataQueue);
     MediaData data;
-    data.nPts = pts;
-    data.pMediaData = pData;
-    data.uPlayTime = (data.nPts - m_streamInfo.nFirstPts) * m_streamInfo.timebase.num * 1000.0 / m_streamInfo.timebase.den;
-    data.pMediaData->m_szDataDescribe = std::to_string(data.uPlayTime);
     if(m_streamInfo.nFirstPts == INT64_MAX)
     {
         m_streamInfo.nFirstPts = pts;
         m_streamInfo.nLastFramePts = pts;
     }
+    data.nPts = pts;
+    data.pMediaData = pData;
+    data.uPlayTime = (data.nPts - m_streamInfo.nFirstPts) * m_streamInfo.timebase.num * 1000.0 / m_streamInfo.timebase.den;
+    data.pMediaData->m_szDataDescribe = std::to_string(data.uPlayTime);
     if(m_queueForMediaData.size() >= m_uBufferMaxSize)
         m_conditionValForBuffer.wait(lockerForVideoQueue);
     m_queueForMediaData.push(data);
