@@ -144,7 +144,7 @@ void MainWindow::playMedia(QString url)
     m_pDecoder->SetDecodeThreadExitCallback(std::bind(&MainWindow::processDecodeThreadExit, this, std::placeholders::_1));
     m_pDecoder->GetVideoSize(&m_uVideoWidth, &m_uVideoHeight);
     m_uBenchmark = m_pDecoder->GetPlayBenchmark();
-
+    m_szPlayDuration = timeutil::SecondToHHMMSS(m_pDecoder->GetPlayDuration());
     this->closeAudioContext();
     this->initAudioContext(m_pDecoder->GetAudioSampleRate(), m_pDecoder->GetAudioChannelNum(), m_pDecoder->GetAudioSampleSize());
 
@@ -184,7 +184,7 @@ void MainWindow::processMediaRawData(RawDataPtr pRawData, unsigned uPlayTime, un
         if(streamType == ffmpegutil::DataDelayTask::kStreamAudio)
             playAudio(pRawData);
         m_uThreshold = uPlayTime;
-        ui->m_pLabProcessBar->setText(to_string(uPlayTime).c_str());
+        ui->m_pLabProcessBar->setText((timeutil::SecondToHHMMSS(uPlayTime/1000) +"/" + m_szPlayDuration).c_str());
         playBufferMediaData(m_uThreshold);
     }
     else if(streamType == ffmpegutil::DataDelayTask::kStreamVideo)

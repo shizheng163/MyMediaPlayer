@@ -98,6 +98,10 @@ private:
     std::mutex              m_mutexForAudioOutput;
     QAudioOutput            *m_pAudioOutput;
     QIODevice               *m_pAudioIODevice;
+    /**
+     * @brief m_szPlayDuration:播放时长
+     */
+    std::string             m_szPlayDuration;
 };
 
 #endif // MAINWINDOW_H
